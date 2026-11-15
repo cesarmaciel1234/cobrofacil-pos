@@ -165,6 +165,10 @@ def _estilo_panel() -> str:
         background-color: #334155;
         color: #FFFFFF;
     }
+    #BarraInferiorAcciones {
+        background-color: #0F172A;
+        border-top: 1px solid #1E293B;
+    }
     #BtnPrincipal {
         background-color: #2563EB;
         color: #FFFFFF;
@@ -253,22 +257,15 @@ class PanelNativoCRM(QWidget):
         contenedor = QWidget()
         contenedor.setObjectName("ContenedorPrincipal")
         lay_raiz = QVBoxLayout(contenedor)
-        lay_raiz.setContentsMargins(24, 20, 24, 24)
-        lay_raiz.setSpacing(16)
+        lay_raiz.setContentsMargins(16, 12, 16, 12)
+        lay_raiz.setSpacing(10)
 
-        # Header con Badge
+        # Header compacto
         header_box = QVBoxLayout()
-        header_box.setSpacing(4)
+        header_box.setSpacing(2)
         header_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        badge_row = QHBoxLayout()
-        badge_row.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl_badge = QLabel("☁️ TPV PRO · ENLACE NUBE")
-        lbl_badge.setObjectName("BrandBadge")
-        badge_row.addWidget(lbl_badge)
-        header_box.addLayout(badge_row)
-
-        lbl_titulo = QLabel("Conectar Servidor con la Nube")
+        lbl_titulo = QLabel("☁️ Conectar Servidor con la Nube")
         lbl_titulo.setObjectName("TituloCabecera")
         lbl_titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_box.addWidget(lbl_titulo)
@@ -279,20 +276,15 @@ class PanelNativoCRM(QWidget):
         header_box.addWidget(lbl_sub)
         lay_raiz.addLayout(header_box)
 
-        # Shield de Resiliencia
+        # Shield compacto de resiliencia
         shield = QFrame()
         shield.setObjectName("BannerShield")
         shield_lay = QHBoxLayout(shield)
-        shield_lay.setContentsMargins(12, 10, 12, 10)
-        shield_lay.setSpacing(10)
-
-        lbl_shield_icono = QLabel("🛡️")
-        lbl_shield_icono.setStyleSheet("font-size: 20px;")
-        shield_lay.addWidget(lbl_shield_icono)
+        shield_lay.setContentsMargins(10, 6, 10, 6)
+        shield_lay.setSpacing(8)
 
         lbl_shield_texto = QLabel(
-            "<b>Arquitectura Aislada y Segura:</b> Si internet se corta o la nube no responde, "
-            "el negocio sigue vendiendo y cobrando localmente con normalidad."
+            "🛡️ <b>Modo Autónomo:</b> Si internet se corta, el negocio sigue vendiendo y cobrando localmente."
         )
         lbl_shield_texto.setObjectName("ShieldTexto")
         lbl_shield_texto.setWordWrap(True)
@@ -303,14 +295,14 @@ class PanelNativoCRM(QWidget):
         tarjeta = QFrame()
         tarjeta.setObjectName("TarjetaCuerpo")
         t_lay = QVBoxLayout(tarjeta)
-        t_lay.setContentsMargins(20, 20, 20, 20)
-        t_lay.setSpacing(16)
+        t_lay.setContentsMargins(16, 14, 16, 14)
+        t_lay.setSpacing(10)
 
         # Banner de Estado
         self.banner_estado = QFrame()
         self.banner_estado.setObjectName("BannerEstado")
         b_lay = QHBoxLayout(self.banner_estado)
-        b_lay.setContentsMargins(12, 10, 12, 10)
+        b_lay.setContentsMargins(10, 8, 10, 8)
         b_lay.setSpacing(10)
 
         b_text_box = QVBoxLayout()
@@ -360,22 +352,16 @@ class PanelNativoCRM(QWidget):
         lbl_url.setProperty("class", "etiqueta-campo")
         self.txt_url = QLineEdit()
         self.txt_url.setPlaceholderText("https://crm-frigorifico.onrender.com")
-        lbl_url_ayuda = QLabel("Servidor de destino en Render con base de datos Neon DB.")
-        lbl_url_ayuda.setProperty("class", "ayuda-campo")
         t_lay.addWidget(lbl_url)
         t_lay.addWidget(self.txt_url)
-        t_lay.addWidget(lbl_url_ayuda)
 
         # 2. Empresa / Usuario
         lbl_emp = QLabel("Nombre de la Empresa / Usuario")
         lbl_emp.setProperty("class", "etiqueta-campo")
         self.txt_empresa = QLineEdit()
         self.txt_empresa.setPlaceholderText("Ej: maciel")
-        lbl_emp_ayuda = QLabel("Mismo nombre con el que inicia sesión en la plataforma web.")
-        lbl_emp_ayuda.setProperty("class", "ayuda-campo")
         t_lay.addWidget(lbl_emp)
         t_lay.addWidget(self.txt_empresa)
-        t_lay.addWidget(lbl_emp_ayuda)
 
         # 3. Contraseña
         lbl_pwd = QLabel("Contraseña de la Empresa")
@@ -391,11 +377,8 @@ class PanelNativoCRM(QWidget):
         self.btn_ojo.clicked.connect(self._toggle_ojo_password)
         pwd_box.addWidget(self.txt_password, 1)
         pwd_box.addWidget(self.btn_ojo)
-        lbl_pwd_ayuda = QLabel("Se almacena protegida en la configuración local y nunca viaja por CLI.")
-        lbl_pwd_ayuda.setProperty("class", "ayuda-campo")
         t_lay.addWidget(lbl_pwd)
         t_lay.addLayout(pwd_box)
-        t_lay.addWidget(lbl_pwd_ayuda)
 
         # 4. Sucursal (ID y Nombre Obligatorio)
         fila_suc = QHBoxLayout()
@@ -423,24 +406,13 @@ class PanelNativoCRM(QWidget):
         lbl_suc_nom_box.addStretch(1)
 
         self.txt_sucursal = QLineEdit()
-        self.txt_sucursal.setPlaceholderText("Ej: Casa Central / Sucursal Maciel")
+        self.txt_sucursal.setPlaceholderText("Ej: Casa Central / alfaro 1954")
         caja_nom.addLayout(lbl_suc_nom_box)
         caja_nom.addWidget(self.txt_sucursal)
         fila_suc.addLayout(caja_nom, 1)
         t_lay.addLayout(fila_suc)
 
-        lbl_suc_ayuda = QLabel("Requerido para que la nube distinga entre múltiples sucursales de la empresa.")
-        lbl_suc_ayuda.setProperty("class", "ayuda-campo")
-        t_lay.addWidget(lbl_suc_ayuda)
-
-        # Botón Principal
-        self.btn_conectar = QPushButton("🚀 Conectar y Enlazar")
-        self.btn_conectar.setObjectName("BtnPrincipal")
-        self.btn_conectar.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.btn_conectar.clicked.connect(self._al_click_conectar)
-        t_lay.addWidget(self.btn_conectar)
-
-        # Telemetría Grid (4 cajas)
+        # Telemetría Grid (4 cajas compactas)
         tele_box = QHBoxLayout()
         tele_box.setSpacing(8)
 
@@ -460,9 +432,27 @@ class PanelNativoCRM(QWidget):
 
         scroll.setWidget(contenedor)
 
+        # Layout principal del widget
         layout_principal = QVBoxLayout(self)
         layout_principal.setContentsMargins(0, 0, 0, 0)
-        layout_principal.addWidget(scroll)
+        layout_principal.setSpacing(0)
+        layout_principal.addWidget(scroll, 1)
+
+        # Barra inferior FIJA con el botón principal (siempre visible en pantalla)
+        barra_inferior = QFrame()
+        barra_inferior.setObjectName("BarraInferiorAcciones")
+        lay_inf = QHBoxLayout(barra_inferior)
+        lay_inf.setContentsMargins(20, 10, 20, 12)
+        lay_inf.setSpacing(10)
+
+        self.btn_conectar = QPushButton("🚀 Conectar y Enlazar")
+        self.btn_conectar.setObjectName("BtnPrincipal")
+        self.btn_conectar.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_conectar.setDefault(True)
+        self.btn_conectar.clicked.connect(self._al_click_conectar)
+        lay_inf.addWidget(self.btn_conectar)
+
+        layout_principal.addWidget(barra_inferior)
 
     def _crear_caja_telemetria(self, titulo: str, inicial: str, layout: QHBoxLayout) -> QLabel:
         frame = QFrame(self)
@@ -563,6 +553,13 @@ class PanelNativoCRM(QWidget):
         self.txt_password.editingFinished.connect(self._guardar_config_local_silencioso)
         self.txt_sucursal_id.editingFinished.connect(self._guardar_config_local_silencioso)
         self.txt_sucursal.editingFinished.connect(self._guardar_config_local_silencioso)
+
+        # Enter / Return conecta de inmediato desde cualquier campo
+        self.txt_url.returnPressed.connect(self._al_click_conectar)
+        self.txt_empresa.returnPressed.connect(self._al_click_conectar)
+        self.txt_password.returnPressed.connect(self._al_click_conectar)
+        self.txt_sucursal_id.returnPressed.connect(self._al_click_conectar)
+        self.txt_sucursal.returnPressed.connect(self._al_click_conectar)
 
     def _guardar_config_local_silencioso(self) -> None:
         """Guarda inmediatamente los valores locales en config.json sin depender de la red."""

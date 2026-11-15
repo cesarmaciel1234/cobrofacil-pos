@@ -1,7 +1,7 @@
 {
-  "app_version": "v50.49",
+  "app_version": "v50.50",
   "channel": "stable",
-  "build_date": "2026-11-15 18:17:33",
+  "build_date": "2026-11-15 20:35:57",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -1644,7 +1644,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "6849f1470928deb5a1c12e3dbeb17efe",
+      "checksum": "74a587d8ededd9a869032968eadcd2b7",
       "channel": "stable",
       "size": 1264244
     },
@@ -1842,9 +1842,9 @@
     },
     "01_Compiladores_y_Ejecutables/launcher_installer/Instalador_Web.py": {
       "version": "1.0.0",
-      "checksum": "0b5f2cda12671740cf1ef3d0257a647d",
+      "checksum": "959dba5c4c111a74d470aa645f2cf509",
       "channel": "stable",
-      "size": 37886
+      "size": 36610
     },
     "01_Compiladores_y_Ejecutables/launcher_installer/web/index.html": {
       "version": "1.0.0",
@@ -10668,9 +10668,9 @@
     },
     "src/central_red_global/servidor/ventana/crm.py": {
       "version": "1.0.0",
-      "checksum": "10beb4b0ed744e771bbefa24498c19ad",
+      "checksum": "c2c7518949708c64755979a1b9230476",
       "channel": "stable",
-      "size": 5905
+      "size": 5943
     },
     "src/central_red_global/servidor/ventana/grilla.py": {
       "version": "1.0.0",
@@ -10686,9 +10686,9 @@
     },
     "src/central_red_global/servidor/ventana/panel_nativo.py": {
       "version": "1.0.0",
-      "checksum": "d5511e7dbe2092ba7f66e312c7696f11",
+      "checksum": "525191cd18b67caaaa54cf65120690d5",
       "channel": "stable",
-      "size": 28121
+      "size": 27850
     },
     "src/central_red_global/servidor/ventana/presencia.py": {
       "version": "1.0.0",
@@ -15108,9 +15108,9 @@
     },
     "src/updater/github_release_url.py": {
       "version": "1.0.0",
-      "checksum": "15cd07bde9bdfe22d6150d7223a1ab66",
+      "checksum": "bbf293cf29730884011c6cc6ffbd6e99",
       "channel": "stable",
-      "size": 3629
+      "size": 3545
     },
     "src/updater/github_updater.py": {
       "version": "1.0.0",
@@ -15150,9 +15150,9 @@
     },
     "src/updater/cerebro/download_fast.py": {
       "version": "1.0.0",
-      "checksum": "f1a007bd6dc3a57e5e18219091494560",
+      "checksum": "f910a86723109d2f2d14ed0a81843bfc",
       "channel": "stable",
-      "size": 8885
+      "size": 8967
     },
     "src/updater/cerebro/download_stage.py": {
       "version": "1.0.0",
@@ -15162,9 +15162,9 @@
     },
     "src/updater/cerebro/engine.py": {
       "version": "1.0.0",
-      "checksum": "9a68e22618c5d43ae5ccdcf39247987b",
+      "checksum": "ab56ab9dea6ba3a74521d062d9b0a2df",
       "channel": "stable",
-      "size": 45757
+      "size": 45725
     },
     "src/updater/cerebro/github_auth.py": {
       "version": "1.0.0",
