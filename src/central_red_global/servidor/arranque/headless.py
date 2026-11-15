@@ -86,10 +86,12 @@ def run_store_server_core(
 
         try:
             from src.central_red_global.servidor.crm_salida.vigilante import prender
+            from src.central_red_global.servidor.crm_salida.web import iniciar_servidor_web
 
             prender()
+            iniciar_servidor_web()
         except Exception as e_crm:
-            logger.warning("CRM  no se pudo prender el módulo: %s", e_crm)
+            logger.warning("CRM  no se pudo prender el módulo o la mini web: %s", e_crm)
 
         while not stop.wait(10.0):
             if vigila_mariadb() and (not mariadb_iniciado or not mariadb_port_open()):

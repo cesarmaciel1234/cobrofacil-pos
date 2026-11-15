@@ -1,14 +1,14 @@
 {
-  "app_version": "v50.45",
+  "app_version": "v50.46",
   "channel": "stable",
-  "build_date": "2026-11-13 10:23:00",
+  "build_date": "2026-11-14 21:26:17",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
       "version": "1.0.0",
-      "checksum": "a0c15facf6cc0aa76b38aee1966a9544",
+      "checksum": "5d3a1dae6f2ba7af401dbcf302f37aaa",
       "channel": "stable",
-      "size": 4558
+      "size": 4586
     },
     "=": {
       "version": "1.0.0",
@@ -30,7 +30,7 @@
     },
     "carteleria_datos.sello": {
       "version": "1.0.0",
-      "checksum": "60a6ae03b801d7407271777611e8b79e",
+      "checksum": "45d5b9ea66ee67499fa17fe333cd623d",
       "channel": "stable",
       "size": 19
     },
@@ -63,6 +63,12 @@
       "checksum": "ffb13f446ada627845dd0b029de2d9b7",
       "channel": "stable",
       "size": 653234
+    },
+    "enviar_cartera_crm.py": {
+      "version": "1.0.0",
+      "checksum": "5e5d8db7ffb2c6e57d522ce99a4da948",
+      "channel": "stable",
+      "size": 2125
     },
     "error_report.json.example": {
       "version": "1.0.0",
@@ -126,9 +132,9 @@
     },
     "main.py": {
       "version": "1.0.0",
-      "checksum": "6aace8079c390a3d288d118cc87c5796",
+      "checksum": "96bf7f4b3a37209bc6d1025075c88a6f",
       "channel": "stable",
-      "size": 29991
+      "size": 30149
     },
     "MEJORAS_UI.md": {
       "version": "1.0.0",
@@ -1360,6 +1366,18 @@
       "channel": "stable",
       "size": 8554
     },
+    "punpro.db-shm": {
+      "version": "1.0.0",
+      "checksum": "6dc8b2bdceb8e7e8f77494f41a3a03e8",
+      "channel": "stable",
+      "size": 32768
+    },
+    "punpro.db-wal": {
+      "version": "1.0.0",
+      "checksum": "cb5b9d53463c207d450fe1056f54290c",
+      "channel": "stable",
+      "size": 4404312
+    },
     "README.md": {
       "version": "1.0.0",
       "checksum": "5a365aa6888336cc7b94aef6cadaaaf2",
@@ -1438,6 +1456,12 @@
       "channel": "stable",
       "size": 1270
     },
+    "run_err.txt": {
+      "version": "1.0.0",
+      "checksum": "025780afaef95348ef241ae5a543b226",
+      "channel": "stable",
+      "size": 8710
+    },
     "run_rebuild.py": {
       "version": "1.0.0",
       "checksum": "7c817bef2540cc58a9415baf4b5ddd87",
@@ -1461,6 +1485,12 @@
       "checksum": "50c7a3b5a8267994a514a287384fe501",
       "channel": "stable",
       "size": 1185
+    },
+    "subir_todo_crm.py": {
+      "version": "1.0.0",
+      "checksum": "dfb698ab022076644a712446d3de0009",
+      "channel": "stable",
+      "size": 3253
     },
     "test_auth.py": {
       "version": "1.0.0",
@@ -1626,7 +1656,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "f0ce3f13445d90e423ad226a3e5993e9",
+      "checksum": "1b6000e4f1c4dafd1a5f0ef85a0653ab",
       "channel": "stable",
       "size": 1258926
     },
@@ -4896,15 +4926,15 @@
     },
     "src/admin/clientes/admin_clientes_main.py": {
       "version": "1.0.0",
-      "checksum": "2c525283469f46ce8bbc7b3fa111ff54",
+      "checksum": "c76f2b4e27405ac3f23c62ace90e7aa3",
       "channel": "stable",
-      "size": 51703
+      "size": 53144
     },
     "src/admin/clientes/plano.md": {
       "version": "1.0.0",
-      "checksum": "48282f9de10742327091d3575a5d5223",
+      "checksum": "24cc90fc72a59ea0b77ce18ca224342e",
       "channel": "stable",
-      "size": 7661
+      "size": 8360
     },
     "src/admin/clientes/README.md": {
       "version": "1.0.0",
@@ -4954,11 +4984,17 @@
       "channel": "stable",
       "size": 6751
     },
+    "src/admin/clientes/componentes/dialogo_fusionar_cliente.py": {
+      "version": "1.0.0",
+      "checksum": "a7c426932ad989b3ffca6622cebe281c",
+      "channel": "stable",
+      "size": 21997
+    },
     "src/admin/clientes/componentes/dialogo_historial_cliente.py": {
       "version": "1.0.0",
-      "checksum": "7ff4f7b68ccc87a43b13dd38df38c0d3",
+      "checksum": "6f939efd59fc111b1022b6d71fec793c",
       "channel": "stable",
-      "size": 49598
+      "size": 50883
     },
     "src/admin/clientes/componentes/dialogo_nuevo_cliente.py": {
       "version": "1.0.0",
@@ -5004,9 +5040,9 @@
     },
     "src/admin/clientes/componentes/README.md": {
       "version": "1.0.0",
-      "checksum": "5d0db4eaa93b2af8b03501e5a70f515c",
+      "checksum": "64f852e33803f7ff5bea6e17ccecf47e",
       "channel": "stable",
-      "size": 4359
+      "size": 4850
     },
     "src/admin/clientes/componentes/__init__.py": {
       "version": "1.0.0",
@@ -5958,9 +5994,9 @@
     },
     "src/base_de_datos/core/executor.py": {
       "version": "1.0.0",
-      "checksum": "e99f1a51550a680ceff0958e9cd4f410",
+      "checksum": "b8c980128887a41b100a280e9d252161",
       "channel": "stable",
-      "size": 10728
+      "size": 10866
     },
     "src/base_de_datos/core/mariadb_probe.py": {
       "version": "1.0.0",
@@ -6156,9 +6192,9 @@
     },
     "src/cajero/f6_centro_cobranzas/dialogo.py": {
       "version": "1.0.0",
-      "checksum": "42f2d68c59198936050b0f7ff06f40a8",
+      "checksum": "e7b81ad4eaa0d749860244014c287abc",
       "channel": "stable",
-      "size": 3926
+      "size": 3925
     },
     "src/cajero/f6_centro_cobranzas/paleta.py": {
       "version": "1.0.0",
@@ -6168,9 +6204,9 @@
     },
     "src/cajero/f6_centro_cobranzas/panel.py": {
       "version": "1.0.0",
-      "checksum": "13a9f0a0282f7bed4ab68440df217a70",
+      "checksum": "44f7706f162b5923b827fa7755be01cb",
       "channel": "stable",
-      "size": 27926
+      "size": 30781
     },
     "src/cajero/f6_centro_cobranzas/plano.md": {
       "version": "1.0.0",
@@ -6180,15 +6216,15 @@
     },
     "src/cajero/f6_centro_cobranzas/punta del piramide.md": {
       "version": "1.0.0",
-      "checksum": "03a2811d78d8acbadc2c913c84c3fcc8",
+      "checksum": "27f69bc410c086ca7f921a5064bdfaca",
       "channel": "stable",
-      "size": 2940
+      "size": 3119
     },
     "src/cajero/f6_centro_cobranzas/README.md": {
       "version": "1.0.0",
-      "checksum": "c53ab3591fc577d0b016e037db9e5a2d",
+      "checksum": "2080661f6cf7daaec3c034e5f62ef526",
       "channel": "stable",
-      "size": 2512
+      "size": 2730
     },
     "src/cajero/f6_centro_cobranzas/__init__.py": {
       "version": "1.0.0",
@@ -6204,9 +6240,9 @@
     },
     "src/cajero/f6_centro_cobranzas/componentes_f6/ui_buscador/panel_buscador.py": {
       "version": "1.0.0",
-      "checksum": "a3951e836b0db6acc27f3e7e4e2d0266",
+      "checksum": "9407a964d24e36d381746bc135600ec2",
       "channel": "stable",
-      "size": 7951
+      "size": 9520
     },
     "src/cajero/f6_centro_cobranzas/componentes_f6/ui_buscador/README.md": {
       "version": "1.0.0",
@@ -6216,9 +6252,9 @@
     },
     "src/cajero/f6_centro_cobranzas/componentes_f6/ui_estado/panel_estado.py": {
       "version": "1.0.0",
-      "checksum": "76adbc5dd0847e12ca4c812cede41f4e",
+      "checksum": "babc90313614365d8b44f89d53e73fe4",
       "channel": "stable",
-      "size": 5535
+      "size": 7527
     },
     "src/cajero/f6_centro_cobranzas/componentes_f6/ui_estado/README.md": {
       "version": "1.0.0",
@@ -10326,15 +10362,15 @@
     },
     "src/central_red_global/servidor/arranque/bandeja.py": {
       "version": "1.0.0",
-      "checksum": "80016a7bd453b14902e6be5a3a774ef1",
+      "checksum": "100d3f3913883fecd5b8f36fe044ba5e",
       "channel": "stable",
-      "size": 11708
+      "size": 12222
     },
     "src/central_red_global/servidor/arranque/headless.py": {
       "version": "1.0.0",
-      "checksum": "3df87958db40ff6ac50316bff46ed8f0",
+      "checksum": "8afdb820ad5319c26af5eacf4fd6a75b",
       "channel": "stable",
-      "size": 3961
+      "size": 4498
     },
     "src/central_red_global/servidor/arranque/proceso.py": {
       "version": "1.0.0",
@@ -10389,6 +10425,108 @@
       "checksum": "9569a77abd1be403009901f4e02c7826",
       "channel": "stable",
       "size": 326
+    },
+    "src/central_red_global/servidor/crm_salida/motor.py": {
+      "version": "1.0.0",
+      "checksum": "fd5a83f1f4e1d123fe64157080a5665b",
+      "channel": "stable",
+      "size": 1281
+    },
+    "src/central_red_global/servidor/crm_salida/plano.md": {
+      "version": "1.0.0",
+      "checksum": "9c25268260504d9e253b31ebb9dbad72",
+      "channel": "stable",
+      "size": 6891
+    },
+    "src/central_red_global/servidor/crm_salida/proceso.py": {
+      "version": "1.0.0",
+      "checksum": "c34b1554200bbd8d9cf3d8be8165d86c",
+      "channel": "stable",
+      "size": 952
+    },
+    "src/central_red_global/servidor/crm_salida/README.md": {
+      "version": "1.0.0",
+      "checksum": "ab99e8c9964a68b35ab1b4c409584d14",
+      "channel": "stable",
+      "size": 7018
+    },
+    "src/central_red_global/servidor/crm_salida/vigilante.py": {
+      "version": "1.0.0",
+      "checksum": "4449e05558e6972b77074f276e2a15ff",
+      "channel": "stable",
+      "size": 9891
+    },
+    "src/central_red_global/servidor/crm_salida/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "22be7f912d6f977278b07877d45ff3ee",
+      "channel": "stable",
+      "size": 561
+    },
+    "src/central_red_global/servidor/crm_salida/motor/bajada.py": {
+      "version": "1.0.0",
+      "checksum": "707fd84453ce4b6b81a40ea3bc86a48c",
+      "channel": "stable",
+      "size": 4961
+    },
+    "src/central_red_global/servidor/crm_salida/motor/estado.py": {
+      "version": "1.0.0",
+      "checksum": "a0c4aa658678c58a8963e771d76d3b3a",
+      "channel": "stable",
+      "size": 5550
+    },
+    "src/central_red_global/servidor/crm_salida/motor/README.md": {
+      "version": "1.0.0",
+      "checksum": "2596c2e61f4aa3f985972b4aa26cbdce",
+      "channel": "stable",
+      "size": 5912
+    },
+    "src/central_red_global/servidor/crm_salida/motor/subida.py": {
+      "version": "1.0.0",
+      "checksum": "9febeec488fd30344e2ae1987378222b",
+      "channel": "stable",
+      "size": 18172
+    },
+    "src/central_red_global/servidor/crm_salida/motor/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "625ac33eb1780e453d2430b0b0ce900b",
+      "channel": "stable",
+      "size": 931
+    },
+    "src/central_red_global/servidor/crm_salida/web/README.md": {
+      "version": "1.0.0",
+      "checksum": "38b439501a64a443c5f7c9367dc91932",
+      "channel": "stable",
+      "size": 4257
+    },
+    "src/central_red_global/servidor/crm_salida/web/servidor_web.py": {
+      "version": "1.0.0",
+      "checksum": "6401af8935110b5c4220a3499acf5725",
+      "channel": "stable",
+      "size": 14478
+    },
+    "src/central_red_global/servidor/crm_salida/web/__init__.py": {
+      "version": "1.0.0",
+      "checksum": "28cb128e1a60abc11b350210ab28dfba",
+      "channel": "stable",
+      "size": 273
+    },
+    "src/central_red_global/servidor/crm_salida/web/static/app.js": {
+      "version": "1.0.0",
+      "checksum": "658cba9f4a6115a6569dc44de6b53e79",
+      "channel": "stable",
+      "size": 10129
+    },
+    "src/central_red_global/servidor/crm_salida/web/static/estilo.css": {
+      "version": "1.0.0",
+      "checksum": "1cab3d6d2e011fc6494ae76564d6f17a",
+      "channel": "stable",
+      "size": 8984
+    },
+    "src/central_red_global/servidor/crm_salida/web/templates/index.html": {
+      "version": "1.0.0",
+      "checksum": "0878203991cbe3d295c807f074baa398",
+      "channel": "stable",
+      "size": 5670
     },
     "src/central_red_global/servidor/oficio/agente.py": {
       "version": "1.0.0",
@@ -10540,6 +10678,12 @@
       "channel": "stable",
       "size": 4152
     },
+    "src/central_red_global/servidor/ventana/crm.py": {
+      "version": "1.0.0",
+      "checksum": "408c077ec9be56ef5f492257a1e60af9",
+      "channel": "stable",
+      "size": 6453
+    },
     "src/central_red_global/servidor/ventana/grilla.py": {
       "version": "1.0.0",
       "checksum": "6a378156e523f16ed210c488580d1a4e",
@@ -10548,9 +10692,9 @@
     },
     "src/central_red_global/servidor/ventana/lienzo.py": {
       "version": "1.0.0",
-      "checksum": "d32fa16396b6a436f0576e61b4300896",
+      "checksum": "415626f7bf5d8847eba2884015e6b33f",
       "channel": "stable",
-      "size": 6327
+      "size": 6802
     },
     "src/central_red_global/servidor/ventana/presencia.py": {
       "version": "1.0.0",
@@ -10560,9 +10704,9 @@
     },
     "src/central_red_global/servidor/ventana/README.md": {
       "version": "1.0.0",
-      "checksum": "dd8d223f805aa880d89f591e03ccca49",
+      "checksum": "7ee3fd7fcc58e86d7d589724a268ed49",
       "channel": "stable",
-      "size": 4424
+      "size": 5137
     },
     "src/central_red_global/servidor/ventana/tablero.py": {
       "version": "1.0.0",
@@ -11124,9 +11268,9 @@
     },
     "src/clientes_fiado/plano.md": {
       "version": "1.0.0",
-      "checksum": "e75052af44b7106205e6323d3df8c2f4",
+      "checksum": "fda67b74c991a3436c549ce1980c3a56",
       "channel": "stable",
-      "size": 10150
+      "size": 10291
     },
     "src/clientes_fiado/README.md": {
       "version": "1.0.0",
@@ -11166,9 +11310,9 @@
     },
     "src/clientes_fiado/cerebro/cerebro.py": {
       "version": "1.0.0",
-      "checksum": "9c6246c1c47799e664706350df78edd1",
+      "checksum": "1d14294ea77e6f6b232b26de8ca80f30",
       "channel": "stable",
-      "size": 16450
+      "size": 16588
     },
     "src/clientes_fiado/cerebro/README.md": {
       "version": "1.0.0",
@@ -11502,9 +11646,9 @@
     },
     "src/clientes_fiado/oficina/barrial/mantenimiento.py": {
       "version": "1.0.0",
-      "checksum": "c3d0169130d4f1fc563bb37ffa95ea8c",
+      "checksum": "a60f2c6b3a0361ff4fdeca7789f92b97",
       "channel": "stable",
-      "size": 16127
+      "size": 16181
     },
     "src/clientes_fiado/oficina/barrial/promesa.py": {
       "version": "1.0.0",
@@ -11652,15 +11796,15 @@
     },
     "src/clientes_fiado/oficina/cuenta/motor.py": {
       "version": "1.0.0",
-      "checksum": "6df8612fda654c7f10f3f85de3ddb36c",
+      "checksum": "705dd89dd8c0ecedc080adb666f7ec4f",
       "channel": "stable",
-      "size": 41456
+      "size": 53073
     },
     "src/clientes_fiado/oficina/cuenta/README.md": {
       "version": "1.0.0",
-      "checksum": "1deb1c7844bd1887992cb1deafcf0484",
+      "checksum": "d31c647e29ef9a3ad79dc31063e8c13a",
       "channel": "stable",
-      "size": 2838
+      "size": 3479
     },
     "src/clientes_fiado/oficina/cuenta/__init__.py": {
       "version": "1.0.0",
@@ -12786,9 +12930,9 @@
     },
     "src/lanzador/cerebro/README.md": {
       "version": "1.0.0",
-      "checksum": "4da9103c4f0f1c574c6468a129fd4faa",
+      "checksum": "2b5b6ce94d09345383cc1bd6703fde73",
       "channel": "stable",
-      "size": 862
+      "size": 1111
     },
     "src/lanzador/cerebro/updater_client.py": {
       "version": "1.0.0",
@@ -12798,9 +12942,9 @@
     },
     "src/lanzador/cerebro/watchdog_perfiles.py": {
       "version": "1.0.0",
-      "checksum": "95de5183578d757ec9eb5553238865a3",
+      "checksum": "b5463c7c8fa5d773829a7fb399e60e5e",
       "channel": "stable",
-      "size": 2302
+      "size": 3016
     },
     "src/lanzador/cerebro/__init__.py": {
       "version": "1.0.0",
@@ -12840,9 +12984,9 @@
     },
     "src/lanzador/servidor/barra/badge.py": {
       "version": "1.0.0",
-      "checksum": "799c6de481024f7da68f2c6becb9004f",
+      "checksum": "e9f1b8d26e9802ee07aad7bfd929f8b5",
       "channel": "stable",
-      "size": 6789
+      "size": 7123
     },
     "src/lanzador/servidor/barra/interruptor.py": {
       "version": "1.0.0",
@@ -12858,15 +13002,15 @@
     },
     "src/lanzador/vistas/hub_main.py": {
       "version": "1.0.0",
-      "checksum": "188d92cf3a65f9128d4f9b897a086008",
+      "checksum": "2265d25fe746bd43d111982ebd816221",
       "channel": "stable",
-      "size": 33514
+      "size": 34308
     },
     "src/lanzador/vistas/README.md": {
       "version": "1.0.0",
-      "checksum": "0775ce8f45134c95b47364f5cab617df",
+      "checksum": "3c0fbb607c21d29ec392f9d07c02dc5a",
       "channel": "stable",
-      "size": 1497
+      "size": 1683
     },
     "src/lanzador/vistas/__init__.py": {
       "version": "1.0.0",
@@ -15102,9 +15246,9 @@
     },
     "src/utils/candados.py": {
       "version": "1.0.0",
-      "checksum": "41fa0a24caaa804d0b2e973ba9330255",
+      "checksum": "3ebd3a43f7c930409c27e6f40b15a46d",
       "channel": "stable",
-      "size": 25888
+      "size": 25793
     },
     "src/utils/db.py": {
       "version": "1.0.0",
@@ -15228,9 +15372,9 @@
     },
     "tests/test_admin_clientes_integridad.py": {
       "version": "1.0.0",
-      "checksum": "05e297ec7c942932f3091ba2a85640d9",
+      "checksum": "c6107145108ad4af7da549645d06c33a",
       "channel": "stable",
-      "size": 13982
+      "size": 14089
     },
     "tests/test_alarma_reposicion.py": {
       "version": "1.0.0",
@@ -15330,9 +15474,9 @@
     },
     "tests/test_cobranzas_y_fondos.py": {
       "version": "1.0.0",
-      "checksum": "3373d7061444b59c45fd07d2bc5c5254",
+      "checksum": "6354b78cbfef0b5026c215e95f0241bc",
       "channel": "stable",
-      "size": 29018
+      "size": 29113
     },
     "tests/test_codigos_adicionales_multi.py": {
       "version": "1.0.0",
@@ -15369,6 +15513,18 @@
       "checksum": "01de500d416feb0a4afc42699727ecd7",
       "channel": "stable",
       "size": 1858
+    },
+    "tests/test_crm_cartera.py": {
+      "version": "1.0.0",
+      "checksum": "64915c5f61c9582265325951c1bd679f",
+      "channel": "stable",
+      "size": 8372
+    },
+    "tests/test_crm_miniweb.py": {
+      "version": "1.0.0",
+      "checksum": "4fba0107891f36f1750b485338992375",
+      "channel": "stable",
+      "size": 4899
     },
     "tests/test_cuentas_multi_token.py": {
       "version": "1.0.0",
@@ -15460,6 +15616,12 @@
       "channel": "stable",
       "size": 775
     },
+    "tests/test_fusion_clientes.py": {
+      "version": "1.0.0",
+      "checksum": "6652a9a1b1df5836541da47fe570d490",
+      "channel": "stable",
+      "size": 6799
+    },
     "tests/test_historial_f3.py": {
       "version": "1.0.0",
       "checksum": "21d486537d74eca52622b02ea2f32952",
@@ -15492,9 +15654,9 @@
     },
     "tests/test_lanzador_corporativo.py": {
       "version": "1.0.0",
-      "checksum": "6be505e8cf087dffc014caeb62e1ed76",
+      "checksum": "2bf7e3f6b0327869df654571384d05e8",
       "channel": "stable",
-      "size": 6440
+      "size": 7490
     },
     "tests/test_lanzador_servidor_watchdog.py": {
       "version": "1.0.0",

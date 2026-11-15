@@ -278,6 +278,9 @@ class CerebroClientesFiado:
     def borrar_cargo(self, movimiento_id, cliente_id):
         return self.cuenta.borrar_cargo(movimiento_id, cliente_id)
 
+    def fusionar_clientes(self, id_destino: int, id_origen: int):
+        return self.cuenta.fusionar_clientes(id_destino, id_origen)
+
     def ventas_sin_cargo(self):
         return self.cuenta.ventas_sin_cargo()
 

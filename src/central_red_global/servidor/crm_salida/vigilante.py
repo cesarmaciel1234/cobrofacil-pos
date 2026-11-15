@@ -20,10 +20,10 @@ logger = logging.getLogger("crm_salida")
 # Plan gratis. Neon se duerme a los 5 min y Render a los 15.
 # La tienda hace unos 70 tickets por día (pico 89). El libro completo
 # tarda cerca de una hora, así que no se manda en cada venta.
-# Se mira cada 15 min. Si cambió, sale como mucho una vez cada 3 horas.
+# Se mira cada 15 min. Si cambió, sale como mucho una vez cada media hora.
 PAUSA_PRIMERA_SEG = 60.0
 PAUSA_VUELTA_SEG = 15 * 60.0
-MINIMO_ENTRE_ENVIOS_SEG = 3 * 60 * 60.0
+MINIMO_ENTRE_ENVIOS_SEG = 30 * 60.0
 TOPE_ENVIO_SEG = 2 * 60 * 60
 # Más adelante queda en True: solo la maestra manda el dato centralizado.
 SOLO_MAESTRA = False
@@ -83,8 +83,14 @@ def turno(rol: str, credenciales: dict | None, lanzar, *, solo_maestra: bool = S
         return "sin_datos"
     try:
         lanzar(credenciales)
-    except Exception:
+    except Exception as exc:
         logger.exception("CRM  el envío falló y el servidor sigue")
+        try:
+            from src.central_red_global.servidor.crm_salida.motor.estado import estado_nube
+
+            estado_nube.registrar_error(str(exc)[:160])
+        except Exception:
+            pass
         return "fallo"
     return "enviado"
 
@@ -170,6 +176,18 @@ def lanzar(credenciales: dict) -> None:
         dato.get("creados", 0),
         dato.get("actualizados", 0),
     )
+    try:
+        from src.central_red_global.servidor.crm_salida.motor.estado import estado_nube
+
+        estado_nube.registrar_exito(
+            tablas=dato.get("tablas", 0),
+            filas=dato.get("filas", dato.get("leidos", 0)),
+            empresa=credenciales.get("empresa"),
+            sucursal=credenciales.get("sucursal"),
+            mensaje=f"Sincronizado con éxito ({dato.get('tablas', 0)} tablas, {dato.get('filas', 0)} filas)",
+        )
+    except Exception:
+        pass
     try:
         os.makedirs(os.path.dirname(ruta_firma), exist_ok=True)
         with open(ruta_firma, "w", encoding="utf-8") as archivo:

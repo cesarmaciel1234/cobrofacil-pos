@@ -220,6 +220,19 @@ class DialogoHistorialCliente(QDialog):
         )
         btn_saldo.clicked.connect(self._cargar_saldo)
         s_act_lay.addWidget(btn_saldo, stretch=1)
+
+        btn_fusion = QPushButton("Unificar")
+        btn_fusion.setFixedHeight(34)
+        btn_fusion.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        btn_fusion.setToolTip("Unificar / mutar este cliente con otro duplicado")
+        btn_fusion.setStyleSheet(
+            "QPushButton { background: #EFF6FF; color: #1E40AF; border: 1px solid #BFDBFE; "
+            "border-radius: 8px; font-size: 12px; font-weight: 900; padding: 0 8px; }"
+            "QPushButton:hover { background: #DBEAFE; border-color: #3B82F6; }"
+        )
+        btn_fusion.clicked.connect(self._unificar_cliente)
+        s_act_lay.addWidget(btn_fusion, stretch=1)
+
         s_lay.addLayout(s_act_lay)
 
         self.lbl_meta = QLabel()
@@ -463,6 +476,22 @@ class DialogoHistorialCliente(QDialog):
         if parent and hasattr(parent, "cargar_clientes"):
             parent.cargar_clientes()
         QMessageBox.information(self, "Saldo", f"Saldo cargado.\nNueva deuda: ${nuevo_saldo:,.2f}")
+
+    def _unificar_cliente(self):
+        from src.admin.clientes.componentes.dialogo_fusionar_cliente import DialogoFusionarCliente
+
+        dlg = DialogoFusionarCliente(self.cliente_id, self)
+        if qt_exec(dlg):
+            self._datos_editados = True
+            parent = self.parent()
+            if parent and hasattr(parent, "cargar_clientes"):
+                parent.cargar_clientes()
+            self.cliente = cerebro.obtener(self.cliente_id) or {}
+            if not self.cliente:
+                self.accept()
+            else:
+                self._actualizar_cabecera()
+                self._cargar_movimientos()
 
     def _cargar_movimientos(self):
         self._cancelar_pintado()

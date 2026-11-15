@@ -152,9 +152,24 @@ class AdminClientes(QWidget):
         act_cobros.triggered.connect(self._abrir_cobros)
         act_cargos = QAction("Planilla de cargos (deuda)", menu_p)
         act_cargos.triggered.connect(self._abrir_cargos)
+        act_fusionar = QAction("Unificar / Mutar clientes…", menu_p)
+        act_fusionar.triggered.connect(lambda: self._abrir_fusionar_cliente(None))
         menu_p.addAction(act_cobros)
         menu_p.addAction(act_cargos)
+        menu_p.addAction(act_fusionar)
         self.btn_planillas.setMenu(menu_p)
+
+        self.btn_unificar = QPushButton("UNIFICAR")
+        self.btn_unificar.setCursor(Qt.PointingHandCursor)
+        self.btn_unificar.setToolTip("Unificar dos clientes duplicados en uno solo consolidando tickets y deuda")
+        self.btn_unificar.setStyleSheet("""
+            QPushButton {
+                background: white; color: #2563EB; font-weight: 900; border-radius: 10px;
+                padding: 12px 18px; border: 1px solid #BFDBFE; font-size: 13px;
+            }
+            QPushButton:hover { background: #EFF6FF; border-color: #3B82F6; }
+        """)
+        self.btn_unificar.clicked.connect(lambda: self._abrir_fusionar_cliente(None))
 
         self.btn_tuerca = QPushButton("⚙")
         self.btn_tuerca.setCursor(Qt.PointingHandCursor)
@@ -170,6 +185,8 @@ class AdminClientes(QWidget):
         self.btn_tuerca.clicked.connect(self._abrir_politicas)
 
         header_lay.addStretch()
+        header_lay.addWidget(self.btn_unificar)
+        header_lay.addSpacing(8)
         header_lay.addWidget(self.btn_auditoria)
         header_lay.addSpacing(8)
         header_lay.addWidget(self.btn_planillas)
@@ -972,8 +989,13 @@ class AdminClientes(QWidget):
         act_promesa.triggered.connect(
             lambda _=False, f=dict(ficha): self._abrir_promesa(f)
         )
+        act_fusion = QAction("Unificar / Mutar cliente…", menu)
+        act_fusion.triggered.connect(
+            lambda _=False, cid=cliente_id: self._abrir_fusionar_cliente(cid)
+        )
         menu.addAction(act_limite)
         menu.addAction(act_editar)
+        menu.addAction(act_fusion)
         menu.addAction(act_estado)
         menu.addAction(act_promesa)
         mas.setMenu(menu)
@@ -1053,6 +1075,13 @@ class AdminClientes(QWidget):
 
     def _abrir_editar_cliente(self, cliente_id):
         dlg = DialogoEditarCliente(cliente_id, self)
+        if qt_exec(dlg):
+            self.cargar_clientes(forzar=True)
+
+    def _abrir_fusionar_cliente(self, cliente_id=None):
+        from src.admin.clientes.componentes.dialogo_fusionar_cliente import DialogoFusionarCliente
+
+        dlg = DialogoFusionarCliente(cliente_id, self)
         if qt_exec(dlg):
             self.cargar_clientes(forzar=True)
 

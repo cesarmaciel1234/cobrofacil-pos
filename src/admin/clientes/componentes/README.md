@@ -10,6 +10,8 @@ Esta carpeta contiene los diálogos de la pantalla de cartera.
 
 `dialogo_politicas_credito.py` configura la regla interactiva de interés simple: tasa base mensual prorrateada por día sobre el capital pendiente, tasa de apalancamiento (+% extra por mora) y días de plazo acordados con previsualización en vivo; sincroniza con la PC Maestra vía `config_tienda` para mantener una única fuente de verdad en todas las cajas. `_cargar_saldo` en `dialogo_historial_cliente.py` permite ingresar monto y motivo/nota editable para ajustes manuales auditables (ej. reverso de cobro duplicado sin borrar cobros de caja).
 
+`dialogo_fusionar_cliente.py` permite consolidar y mutar dos fichas de clientes en una sola cuando un cajero dio de alta un duplicado existente. Cuenta con detección automática de duplicados por nombre, preselección inteligente (conserva ficha antigua y propone absorber la recién creada), botón de inversión de roles `⇄ Invertir`, vista previa de la deuda consolidada y transferencia atómica de tickets fiados, cobros y movimientos en una sola transacción sin pérdida de datos.
+
 `dialogo_cobros.py` es la planilla de abonos. Mismos chips de período + buscador con debounce. **Ticket cobro** = `COB-{id}`.
 
 `dialogo_cargos.py` es la planilla de cargos. Mismos chips + estado (Vivos / Borrados / Cancelados).

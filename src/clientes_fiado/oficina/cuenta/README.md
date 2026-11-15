@@ -8,6 +8,8 @@ en la cola offline; no pertenece al motor de ventas.
 
 `borrar_cargo` no borra la fila: marca `BORRADO ·`, inserta `ANULACION` y cancela el ticket en la misma transacción. En tickets y cargos manuales, la anulación revierte el capital original y el interés ya asentado; el interés pagado queda como saldo a favor. No se puede borrar una línea consolidada de interés por separado.
 
+`fusionar_clientes` consolida dos clientes en una sola transacción atómica (`_confirmar`): traslada todos los movimientos de `cuenta_corriente` del origen al destino, actualiza ventas fiadas vinculadas, recalcula el `saldo_resultante` de cada movimiento en orden cronológico, actualiza la `deuda_actual` consolidada, hereda DNI/teléfono/dirección vacíos y límite de crédito máximo, registra auditoría en `clientes_auditoria` (`FUSION`) y elimina la fila duplicada en `clientes`.
+
 Al cancelar en F3, `cancelacion.py` revierte capital e interés, marca `CANCELADO ·` y deja `Ticket cancelado #N (F3)`. `ventas.py` conserva solo el cambio físico del ticket, stock y caja, dentro de la misma transacción. Si el ticket ya estaba `CANCELADA` y el cargo seguía vivo, cartera vuelve a anular el cargo.
 
 `cargo_inactivo` cubre BORRADO y CANCELADO. `ultimo_cargo` / `ultimos_cargos` los ignoran.

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cobro Fácil · Enlace Nube & CRM</title>
+  <link rel="stylesheet" href="/static/estilo.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand-badge">☁️ TPV PRO · ENLACE NUBE</div>
+      <h1 class="title">Conectar Servidor con la Nube</h1>
+      <p class="subtitle">Sincronización de catálogo, ventas y cartera de clientes con el CRM</p>
+    </header>
+
+    <!-- Shield de Resiliencia y Autonomía Local -->
+    <div class="shield-banner">
+      <div class="shield-icon">🛡️</div>
+      <div class="shield-text">
+        <strong>Arquitectura Aislada y Segura</strong>
+        Si internet se corta o la nube no responde, el negocio sigue vendiendo y cobrando localmente con normalidad.
+      </div>
+    </div>
+
+    <!-- Main Card -->
+    <main class="card">
+      <!-- Status Pill Banner -->
+      <div id="status-banner" class="status-pill-banner desconectado">
+        <div class="status-left">
+          <div class="status-indicator-dot"></div>
+          <div>
+            <div id="status-title" class="status-title">⚪ NO ENLAZADO</div>
+            <div id="status-desc" class="status-desc">Cargando estado del enlace...</div>
+          </div>
+        </div>
+        <div class="status-right">
+          <button type="button" id="btn-reconectar" class="btn btn-reconnect" style="display: none; padding: 6px 12px; font-size: 12px;">
+            🔄 Reconectar
+          </button>
+          <button type="button" id="btn-sincronizar" class="btn-banner-action" style="display: none;">
+            ⚡ Sincronizar Ahora
+          </button>
+        </div>
+      </div>
+
+      <!-- Error Alert Box -->
+      <div id="error-box" class="error-box">
+        <div class="error-box-header">
+          <span>⚠️</span> Error al conectar con la Nube
+        </div>
+        <div id="error-msg" class="error-box-msg">
+          Detalle del error...
+        </div>
+      </div>
+
+      <!-- Config Form -->
+      <form id="form-enlace">
+        <div class="form-group">
+          <label class="form-label" for="url">
+            <span>Dirección del CRM (Nube)</span>
+          </label>
+          <div class="form-input-wrap">
+            <input type="url" id="url" class="form-input" placeholder="https://crm-frigorifico.onrender.com" required>
+          </div>
+          <div class="form-help">Servidor de destino en Render con base de datos Neon DB.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="empresa">
+            <span>Nombre de la Empresa / Usuario</span>
+          </label>
+          <div class="form-input-wrap">
+            <input type="text" id="empresa" class="form-input" placeholder="Ej: maciel" required autocomplete="username">
+          </div>
+          <div class="form-help">Mismo nombre con el que inicia sesión en la plataforma web.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">
+            <span>Contraseña de la Empresa</span>
+          </label>
+          <div class="form-input-wrap">
+            <input type="password" id="password" class="form-input" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" id="toggle-pwd" class="toggle-pwd" title="Ver contraseña">👁️</button>
+          </div>
+          <div class="form-help">Se almacena protegida en la configuración local y nunca viaja por CLI.</div>
+        </div>
+
+        <div class="form-group">
+          <div class="form-row">
+            <div>
+              <label class="form-label" for="sucursal_id">ID</label>
+              <input type="number" id="sucursal_id" class="form-input" placeholder="1" value="1" min="1" required>
+            </div>
+            <div>
+              <label class="form-label" for="sucursal">
+                <span>Nombre de Sucursal</span>
+                <span class="obligatorio">* Obligatorio</span>
+              </label>
+              <input type="text" id="sucursal" class="form-input" placeholder="Ej: Casa Central / Sucursal Maciel" required>
+            </div>
+          </div>
+          <div class="form-help">Requerido para que la nube distinga entre múltiples sucursales de la empresa.</div>
+        </div>
+
+        <div class="btn-group">
+          <button type="submit" id="btn-conectar" class="btn btn-primary">
+            🚀 Conectar y Enlazar
+          </button>
+        </div>
+      </form>
+
+      <!-- Telemetry Grid -->
+      <div class="telemetry-grid">
+        <div class="telemetry-item">
+          <div class="telemetry-label">Último Envío</div>
+          <div id="val-ultimo-envio" class="telemetry-val">—</div>
+        </div>
+        <div class="telemetry-item">
+          <div class="telemetry-label">Datos Replicados</div>
+          <div id="val-filas" class="telemetry-val">0 filas</div>
+        </div>
+        <div class="telemetry-item">
+          <div class="telemetry-label">Empresa Enlazada</div>
+          <div id="val-empresa" class="telemetry-val">—</div>
+        </div>
+        <div class="telemetry-item">
+          <div class="telemetry-label">Sucursal Asignada</div>
+          <div id="val-sucursal" class="telemetry-val">—</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      Cobro Fácil 2026 · <strong>Motor Desacoplado de Transporte Nube</strong> · Subida y Recepción Bidireccional
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -34,8 +34,10 @@ class QueryExecutorMixin:
             return None
         return [_FilaCopia(fila) for fila in filas]
 
-    def _normalize_query(self, query: str) -> str:
+    def _normalize_query(self, query: str, conn=None) -> str:
         """Convierte SQL escrito en dialecto SQLite a dialecto MariaDB si corresponde."""
+        if conn is not None and isinstance(conn, sqlite3.Connection):
+            return query
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
             return query
         import re
@@ -108,7 +110,7 @@ class QueryExecutorMixin:
                 self.asegurar_lectura_tienda()
             conn = self.get_connection()
             cursor = conn.cursor()
-            cursor.execute(self._normalize_query(query), params)
+            cursor.execute(self._normalize_query(query, conn), params)
             result = cursor.fetchall()
             return result if result is not None else []
         except Exception as e:
@@ -135,7 +137,7 @@ class QueryExecutorMixin:
                 self.asegurar_lectura_tienda()
             conn = self.get_connection()
             cursor = conn.cursor()
-            cursor.execute(self._normalize_query(query), params)
+            cursor.execute(self._normalize_query(query, conn), params)
             conn.commit()
             return True
         except Exception as e:
@@ -168,7 +170,7 @@ class QueryExecutorMixin:
                 self.asegurar_lectura_tienda()
             conn = self.get_connection()
             cursor = conn.cursor()
-            cursor.execute(self._normalize_query(query), params)
+            cursor.execute(self._normalize_query(query, conn), params)
             conn.commit()
             return cursor.lastrowid
         except Exception as e:
@@ -191,7 +193,7 @@ class QueryExecutorMixin:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
-            cursor.executemany(self._normalize_query(query), params_list)
+            cursor.executemany(self._normalize_query(query, conn), params_list)
             conn.commit()
             return True
         except Exception as e:
@@ -224,7 +226,7 @@ class QueryExecutorMixin:
                 return vals[0] if vals else None
             conn = self.get_connection()
             cursor = conn.cursor()
-            cursor.execute(self._normalize_query(query), params)
+            cursor.execute(self._normalize_query(query, conn), params)
             row = cursor.fetchone()
             if row:
                 if isinstance(row, dict):

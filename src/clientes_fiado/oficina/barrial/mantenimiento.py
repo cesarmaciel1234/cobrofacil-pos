@@ -225,7 +225,7 @@ def _consulta_escribible(sql, params=()):
         cur = conn.cursor()
         q = sql
         p = params
-        if hasattr(db_manager, "_normalize_query"):
+        if type(conn).__name__ == "MariaDBConnectionWrapper" and hasattr(db_manager, "_normalize_query"):
             q = db_manager._normalize_query(sql)
         cur.execute(q, p)
         return cur.fetchall() or []

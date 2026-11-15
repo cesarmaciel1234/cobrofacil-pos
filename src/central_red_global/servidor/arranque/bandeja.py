@@ -347,8 +347,10 @@ def run_store_server_app(app, background: bool = False) -> int:
     logger.info("Servidor de Tienda en ejecución (proceso dedicado).")
     try:
         from src.central_red_global.servidor.crm_salida.vigilante import prender
+        from src.central_red_global.servidor.crm_salida.web import iniciar_servidor_web
 
         prender()
+        iniciar_servidor_web()
     except Exception as e_crm:
-        logger.warning(f"CRM  no se pudo prender el módulo: {e_crm}")
+        logger.warning(f"CRM  no se pudo prender el módulo o la mini web: {e_crm}")
     return qt_exec(app)

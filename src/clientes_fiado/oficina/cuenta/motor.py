@@ -435,9 +435,9 @@ class MotorCuenta:
         filas = _get_read_db().execute_query(
             "SELECT id, fecha, tipo, monto, saldo_resultante, descripcion, venta_id "
             "FROM cuenta_corriente WHERE cliente_id = ? "
-            "AND (descripcion IS NULL OR (descripcion NOT LIKE '%MANTENIMIENTO%' AND descripcion NOT LIKE '%mantenimiento%')) "
+            "AND (descripcion IS NULL OR (descripcion NOT LIKE ? AND descripcion NOT LIKE ?)) "
             "ORDER BY fecha DESC, id DESC",
-            (cliente_id,),
+            (cliente_id, "%MANTENIMIENTO%", "%mantenimiento%"),
         ) or []
 
         # En esclava offline, fusionar movimientos locales de la base escribible (punpro.db)
@@ -446,9 +446,9 @@ class MotorCuenta:
             locales = _consulta_escribible(
                 "SELECT id, fecha, tipo, monto, saldo_resultante, descripcion, venta_id "
                 "FROM cuenta_corriente WHERE cliente_id = ? "
-                "AND (descripcion IS NULL OR (descripcion NOT LIKE '%MANTENIMIENTO%' AND descripcion NOT LIKE '%mantenimiento%')) "
+                "AND (descripcion IS NULL OR (descripcion NOT LIKE ? AND descripcion NOT LIKE ?)) "
                 "ORDER BY fecha DESC, id DESC",
-                (cliente_id,),
+                (cliente_id, "%MANTENIMIENTO%", "%mantenimiento%"),
             ) or []
             if locales:
                 vistos_id = {f.get("id") if isinstance(f, dict) else f[0] for f in filas}
@@ -745,8 +745,9 @@ class MotorCuenta:
             "cc.venta_id, c.nombre, c.dni "
             "FROM cuenta_corriente cc LEFT JOIN clientes c ON c.id = cc.cliente_id "
             "WHERE cc.tipo = 'CARGO' "
-            "AND (cc.descripcion IS NULL OR (cc.descripcion NOT LIKE '%MANTENIMIENTO%' AND cc.descripcion NOT LIKE '%mantenimiento%')) "
-            "ORDER BY cc.fecha DESC, cc.id DESC"
+            "AND (cc.descripcion IS NULL OR (cc.descripcion NOT LIKE ? AND cc.descripcion NOT LIKE ?)) "
+            "ORDER BY cc.fecha DESC, cc.id DESC",
+            ("%MANTENIMIENTO%", "%mantenimiento%"),
         ) or []
         return [
             armar(fila) for fila in filas
@@ -1105,4 +1106,216 @@ class MotorCuenta:
 
         return _confirmar(
             trabajo, (False, 0.0, "No se pudo marcar el cargo."), "borrado de cargo"
+        )
+
+    def fusionar_clientes(self, id_destino: int, id_origen: int):
+        """
+        Fusiona / muta dos clientes en uno solo de manera atómica:
+        - id_destino: Cliente principal que se conserva.
+        - id_origen: Cliente duplicado que se absorbe y se elimina.
+        Todos los movimientos de cuenta corriente, tickets, cargos y abonos
+        de id_origen se reasignan a id_destino.
+        Se recalcula el saldo_resultante cronológico y la deuda_actual consolidada.
+        Se preservan DNI, teléfono y dirección si el destino no los tenía.
+        Se deja registro de auditoría en clientes_auditoria y se limpia la duplicidad.
+        """
+        try:
+            id_dest = int(id_destino)
+            id_orig = int(id_origen)
+        except (TypeError, ValueError):
+            return False, 0.0, "Identificadores de cliente inválidos."
+
+        if id_dest <= 0 or id_orig <= 0:
+            return False, 0.0, "Los identificadores deben ser mayores a cero."
+
+        if id_dest == id_orig:
+            return False, 0.0, "No se puede fusionar un cliente consigo mismo."
+
+        from src.clientes_fiado.oficina.huella import tabla
+        from src.clientes_fiado.oficina.huella.eventos import fila_evento, guardar_en
+
+        tabla.asegurar()
+
+        def trabajo(cursor):
+            es_maria = type(cursor).__name__ == "MariaDBCursorWrapper"
+            bloqueo = " FOR UPDATE" if es_maria else ""
+
+            # 1. Obtener y bloquear ambos clientes
+            cursor.execute(
+                f"SELECT * FROM clientes WHERE id = ?{bloqueo}", (id_dest,)
+            )
+            fila_dest = cursor.fetchone()
+            if not fila_dest:
+                return False, 0.0, f"No se encontró el cliente destino (ID {id_dest})."
+            dest = _ficha(fila_dest)
+
+            cursor.execute(
+                f"SELECT * FROM clientes WHERE id = ?{bloqueo}", (id_orig,)
+            )
+            fila_orig = cursor.fetchone()
+            if not fila_orig:
+                return False, 0.0, f"No se encontró el cliente origen a fusionar (ID {id_orig})."
+            orig = _ficha(fila_orig)
+
+            nombre_dest = str(dest.get("nombre") or "").strip()
+            nombre_orig = str(orig.get("nombre") or "").strip()
+            uid_dest = dest.get("uid") or ""
+
+            # 2. Migrar movimientos de cuenta corriente
+            cursor.execute(
+                "UPDATE cuenta_corriente SET cliente_id = ? WHERE cliente_id = ?",
+                (id_dest, id_orig),
+            )
+            movs_migrados = getattr(cursor, "rowcount", 0) or 0
+
+            # 3. Migrar backup de mantenimiento si existe la tabla
+            try:
+                cursor.execute(
+                    "UPDATE cuenta_corriente_mantenimiento_backup SET cliente_id = ? WHERE cliente_id = ?",
+                    (id_dest, id_orig),
+                )
+            except Exception:
+                pass
+
+            # 4. Migrar auditorías históricas asociadas
+            try:
+                cursor.execute(
+                    "UPDATE clientes_auditoria SET cliente_id = ? WHERE cliente_id = ?",
+                    (id_dest, id_orig),
+                )
+            except Exception:
+                pass
+
+            # 5. En ventas, si el ticket fiado referenciaba el nombre del origen, actualizarlo al nombre unificado
+            try:
+                cursor.execute(
+                    "UPDATE ventas SET cliente_nombre = ? WHERE cliente_nombre = ?",
+                    (nombre_dest, nombre_orig),
+                )
+            except Exception:
+                pass
+
+            # 6. Recalcular saldos cronológicos de todos los movimientos de id_dest
+            cursor.execute(
+                f"SELECT id, tipo, monto, descripcion FROM cuenta_corriente WHERE cliente_id = ? ORDER BY fecha ASC, id ASC{bloqueo}",
+                (id_dest,),
+            )
+            filas_movs = cursor.fetchall() or []
+
+            running_saldo = Decimal("0.00")
+            for m in filas_movs:
+                mid = _celda(m, "id", 0)
+                tipo = str(_celda(m, "tipo", 1) or "").upper()
+                monto = Decimal(str(_celda(m, "monto", 2) or "0"))
+                desc = str(_celda(m, "descripcion", 3) or "")
+                if not cargo_inactivo(desc):
+                    if tipo == "CARGO":
+                        running_saldo += monto
+                    elif tipo in ("ABONO", "ANULACION"):
+                        running_saldo -= monto
+                cursor.execute(
+                    "UPDATE cuenta_corriente SET saldo_resultante = ? WHERE id = ?",
+                    (float(running_saldo), mid),
+                )
+
+            deuda_consolidada = float(running_saldo)
+
+            # 7. Completar campos vacíos en el destino con datos del origen
+            dni_dest = str(dest.get("dni") or "").strip()
+            dni_orig = str(orig.get("dni") or "").strip()
+            dni_final = dni_dest if dni_dest else dni_orig
+
+            tel_dest = str(dest.get("telefono") or "").strip()
+            tel_orig = str(orig.get("telefono") or "").strip()
+            tel_final = tel_dest if tel_dest else tel_orig
+
+            dir_dest = str(dest.get("direccion") or "").strip()
+            dir_orig = str(orig.get("direccion") or "").strip()
+            dir_final = dir_dest if dir_dest else dir_orig
+
+            lim_dest = float(dest.get("limite_credito") or 0)
+            lim_orig = float(orig.get("limite_credito") or 0)
+            lim_final = max(lim_dest, lim_orig)
+
+            ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            cursor.execute(
+                "UPDATE clientes SET "
+                "deuda_actual = ?, "
+                "limite_credito = ?, "
+                "dni = ?, "
+                "telefono = ?, "
+                "direccion = ?, "
+                "actualizado_en = ? "
+                "WHERE id = ?",
+                (
+                    deuda_consolidada,
+                    lim_final,
+                    dni_final if dni_final else None,
+                    tel_final if tel_final else None,
+                    dir_final if dir_final else None,
+                    ahora,
+                    id_dest,
+                ),
+            )
+
+            # 8. Eliminar el cliente origen duplicado
+            cursor.execute("DELETE FROM clientes WHERE id = ?", (id_orig,))
+
+            # 9. Asentar evento auditable de fusión
+            try:
+                detalle_evento = {
+                    "tipo": "FUSION_CLIENTE",
+                    "id_destino": id_dest,
+                    "nombre_destino": nombre_dest,
+                    "id_origen": id_orig,
+                    "nombre_origen": nombre_orig,
+                    "movimientos_migrados": movs_migrados,
+                    "deuda_previa_destino": float(dest.get("deuda_actual") or 0),
+                    "deuda_previa_origen": float(orig.get("deuda_actual") or 0),
+                    "deuda_consolidada": deuda_consolidada,
+                }
+                ev = fila_evento(
+                    "FUSION",
+                    cliente_uid=uid_dest,
+                    cliente_id=id_dest,
+                    nombre=nombre_dest,
+                    detalle=detalle_evento,
+                )
+                guardar_en(cursor, ev)
+            except Exception:
+                logger.exception("[Cuenta corriente] No se pudo guardar auditoría de fusión")
+
+            # 10. Reflejar en punpro.db local si existe y no es la base activa
+            try:
+                import sqlite3, os
+                if os.path.exists("punpro.db") and es_maria:
+                    with sqlite3.connect("punpro.db") as p_conn:
+                        p_cur = p_conn.cursor()
+                        p_cur.execute(
+                            "UPDATE cuenta_corriente SET cliente_id = ? WHERE cliente_id = ?",
+                            (id_dest, id_orig),
+                        )
+                        p_cur.execute(
+                            "UPDATE clientes SET deuda_actual = ?, limite_credito = ?, actualizado_en = ? WHERE id = ?",
+                            (deuda_consolidada, lim_final, ahora, id_dest),
+                        )
+                        p_cur.execute("DELETE FROM clientes WHERE id = ?", (id_orig,))
+                        p_conn.commit()
+            except Exception:
+                pass
+
+            return True, deuda_consolidada, {
+                "id_destino": id_dest,
+                "nombre_destino": nombre_dest,
+                "id_origen": id_orig,
+                "nombre_origen": nombre_orig,
+                "movimientos_migrados": movs_migrados,
+                "deuda_consolidada": deuda_consolidada,
+            }
+
+        return _confirmar(
+            trabajo,
+            (False, 0.0, "No se pudo realizar la fusión de clientes."),
+            "fusión de clientes",
         )
