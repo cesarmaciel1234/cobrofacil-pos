@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const valFilas = document.getElementById("val-filas");
   const valEmpresa = document.getElementById("val-empresa");
   const valSucursal = document.getElementById("val-sucursal");
+  let datosCargadosInicialmente = false;
 
   // Mostrar / Ocultar contraseña
   if (togglePwdBtn) {
@@ -102,18 +103,18 @@ document.addEventListener("DOMContentLoaded", () => {
     if (valEmpresa) valEmpresa.textContent = data.empresa || "—";
     if (valSucursal) valSucursal.textContent = data.sucursal ? `#${data.sucursal_id || '1'} ${data.sucursal}` : "—";
 
-    // Rellenar campos si el usuario no los está editando
-    if (document.activeElement !== urlInput && data.url) {
-      urlInput.value = data.url;
-    }
-    if (document.activeElement !== empresaInput && data.empresa) {
-      empresaInput.value = data.empresa;
-    }
-    if (document.activeElement !== sucursalIdInput && data.sucursal_id) {
-      sucursalIdInput.value = data.sucursal_id;
-    }
-    if (document.activeElement !== sucursalInput && data.sucursal) {
-      sucursalInput.value = data.sucursal;
+    // Rellenar campos SOLO en la primera carga o si están vacíos para no pisar lo que escribe el usuario
+    if (!datosCargadosInicialmente) {
+      if (data.url) urlInput.value = data.url;
+      if (data.empresa) empresaInput.value = data.empresa;
+      if (data.sucursal_id) sucursalIdInput.value = data.sucursal_id;
+      if (data.sucursal) sucursalInput.value = data.sucursal;
+      datosCargadosInicialmente = true;
+    } else {
+      if (!urlInput.value && data.url) urlInput.value = data.url;
+      if (!empresaInput.value && data.empresa) empresaInput.value = data.empresa;
+      if (!sucursalIdInput.value && data.sucursal_id) sucursalIdInput.value = data.sucursal_id;
+      if (!sucursalInput.value && data.sucursal) sucursalInput.value = data.sucursal;
     }
     if (data.tiene_clave_guardada && !passwordInput.value) {
       passwordInput.placeholder = "•••••••• (Contraseña guardada)";

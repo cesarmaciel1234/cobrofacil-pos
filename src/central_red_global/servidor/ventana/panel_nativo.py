@@ -238,6 +238,7 @@ class PanelNativoCRM(QWidget):
 
         self._construir_ui()
         self._cargar_datos_existentes()
+        self._conectar_guardado_automatico()
         self._refrescar_estado()
 
         # Temporizador para refrescar telemetría y estado
@@ -555,7 +556,44 @@ class PanelNativoCRM(QWidget):
         self.lbl_estado_titulo.style().unpolish(self.lbl_estado_titulo)
         self.lbl_estado_titulo.style().polish(self.lbl_estado_titulo)
 
+    def _conectar_guardado_automatico(self) -> None:
+        """Conecta eventos para persistir de inmediato cualquier cambio que haga el usuario."""
+        self.txt_url.editingFinished.connect(self._guardar_config_local_silencioso)
+        self.txt_empresa.editingFinished.connect(self._guardar_config_local_silencioso)
+        self.txt_password.editingFinished.connect(self._guardar_config_local_silencioso)
+        self.txt_sucursal_id.editingFinished.connect(self._guardar_config_local_silencioso)
+        self.txt_sucursal.editingFinished.connect(self._guardar_config_local_silencioso)
+
+    def _guardar_config_local_silencioso(self) -> None:
+        """Guarda inmediatamente los valores locales en config.json sin depender de la red."""
+        try:
+            from src.config import config
+
+            url = self.txt_url.text().strip().rstrip("/")
+            empresa = self.txt_empresa.text().strip()
+            pwd = self.txt_password.text().strip()
+            suc_id = self.txt_sucursal_id.text().strip() or "1"
+            suc = self.txt_sucursal.text().strip()
+
+            if url:
+                config.set("crm_url", url)
+            if empresa:
+                config.set("crm_usuario", empresa)
+                config.set("crm_empresa", empresa)
+            if pwd:
+                config.set("crm_password", pwd)
+            config.set("crm_sucursal_id", suc_id)
+            if suc:
+                config.set("crm_sucursal", suc)
+                estado_nube.registrar_sucursal_local(suc_id, suc)
+                self.lbl_tele_sucursal.setText(f"#{suc_id} {suc}")
+        except Exception as exc:
+            logger.debug(f"Error guardando config local silencioso: {exc}")
+
     def _al_click_conectar(self) -> None:
+        # Guardar inmediatamente en config local antes de intentar conectar
+        self._guardar_config_local_silencioso()
+
         url = self.txt_url.text().strip().rstrip("/")
         empresa = self.txt_empresa.text().strip()
         password = self.txt_password.text().strip()
@@ -633,22 +671,20 @@ class PanelNativoCRM(QWidget):
 
         def _tarea_fondo() -> None:
             ok, empresa_id, detalle, sucursales = probar_conexion(url, empresa, password)
+            nombre_sucursal = sucursal
+            suc_id = sucursal_id
             if ok:
-                nombre_sucursal = sucursal
-                suc_id = sucursal_id
                 if sucursales:
                     coincidente = next(
                         (
                             s
                             for s in sucursales
-                            if str(s.get("id")) == str(sucursal_id)
-                            or str(s.get("nombre", "")).strip().lower() == sucursal.strip().lower()
+                            if str(s.get("nombre", "")).strip().lower() == sucursal.strip().lower()
                         ),
                         None,
                     )
                     if coincidente:
                         suc_id = str(coincidente.get("id", sucursal_id))
-                        nombre_sucursal = str(coincidente.get("nombre") or sucursal)
 
                 try:
                     from src.config import config

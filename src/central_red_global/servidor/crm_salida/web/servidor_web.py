@@ -189,6 +189,21 @@ class MiniWebHandler(BaseHTTPRequestHandler):
             if not password:
                 return self._responder_json({"ok": False, "error": "Debe ingresar la contraseña de la empresa."}, 400)
 
+        # Guardar inmediatamente los datos ingresados en config local
+        try:
+            from src.config import config
+
+            config.set("crm_url", url)
+            config.set("crm_usuario", empresa)
+            config.set("crm_empresa", empresa)
+            if password:
+                config.set("crm_password", password)
+            config.set("crm_sucursal_id", sucursal_id)
+            config.set("crm_sucursal", sucursal)
+            estado_nube.registrar_sucursal_local(sucursal_id, sucursal)
+        except Exception as exc:
+            logger.warning(f"Error guardando config local preliminar: {exc}")
+
         estado_nube.registrar_conectando(url, empresa, sucursal)
 
         # Probar autenticación contra la nube con timeout ampliado y consulta de sucursales
@@ -212,21 +227,19 @@ class MiniWebHandler(BaseHTTPRequestHandler):
                 400,
             )
 
-        # Si el CRM ya tiene sucursales registradas, verificar si coincide la elegida
+        # Si el CRM ya tiene sucursales registradas, verificar si coincide la elegida por nombre
         nombre_sucursal = sucursal
         if sucursales:
             coincidente = next(
                 (
                     s
                     for s in sucursales
-                    if str(s.get("id")) == str(sucursal_id)
-                    or str(s.get("nombre", "")).strip().lower() == sucursal.strip().lower()
+                    if str(s.get("nombre", "")).strip().lower() == sucursal.strip().lower()
                 ),
                 None,
             )
             if coincidente:
                 sucursal_id = str(coincidente.get("id", sucursal_id))
-                nombre_sucursal = str(coincidente.get("nombre") or sucursal)
 
         # Guardar en config local de la tienda
         try:

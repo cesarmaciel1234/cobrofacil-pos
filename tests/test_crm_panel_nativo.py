@@ -45,3 +45,22 @@ def test_ventana_miniweb_usa_panel_nativo_si_falla_webengine():
     assert ventana._panel_nativo is not None
     assert isinstance(ventana._panel_nativo, PanelNativoCRM)
     ventana.deleteLater()
+
+
+def test_panel_nativo_guarda_cambio_sucursal_inmediato():
+    from src.config import config
+
+    suc_ant = config.get("crm_sucursal")
+    try:
+        panel = PanelNativoCRM()
+        panel.txt_sucursal.setText("Nueva Sucursal Test")
+        panel.txt_sucursal_id.setText("5")
+        panel._guardar_config_local_silencioso()
+
+        assert config.get("crm_sucursal") == "Nueva Sucursal Test"
+        assert str(config.get("crm_sucursal_id")) == "5"
+        panel.deleteLater()
+    finally:
+        if suc_ant:
+            config.set("crm_sucursal", suc_ant)
+            config.set("crm_sucursal_id", "1")

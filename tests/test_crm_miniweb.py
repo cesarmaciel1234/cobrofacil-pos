@@ -23,9 +23,11 @@ from src.central_red_global.servidor.crm_salida.web.servidor_web import (
 @pytest.fixture(autouse=True)
 def cleanup_web():
     from src.config import config
+    from src.central_red_global.servidor.crm_salida.motor.estado import estado_nube
     url_orig = config.get("crm_url")
     user_orig = config.get("crm_usuario")
     suc_orig = config.get("crm_sucursal")
+    suc_id_orig = config.get("crm_sucursal_id")
     yield
     detener_servidor_web()
     try:
@@ -35,6 +37,9 @@ def cleanup_web():
             config.set("crm_usuario", user_orig)
         if suc_orig:
             config.set("crm_sucursal", suc_orig)
+        if suc_id_orig:
+            config.set("crm_sucursal_id", suc_id_orig)
+        estado_nube.registrar_sucursal_local(suc_id_orig or "1", suc_orig or "")
     except Exception:
         pass
 

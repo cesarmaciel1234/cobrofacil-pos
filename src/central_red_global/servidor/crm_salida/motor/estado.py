@@ -98,6 +98,16 @@ class GestorEstado:
                 pass
             return dict(self._estado)
 
+    def registrar_sucursal_local(self, sucursal_id: str, sucursal: str) -> None:
+        """Actualiza y persiste la sucursal localmente sin requerir conexión a internet."""
+        with self._lock:
+            if sucursal_id:
+                self._estado["sucursal_id"] = str(sucursal_id).strip()
+            if sucursal:
+                self._estado["sucursal"] = str(sucursal).strip()
+            self._estado["actualizado_en"] = time.time()
+            self._guardar_disco()
+
     def registrar_conectando(self, url: str, empresa: str, sucursal: str) -> None:
         with self._lock:
             self._estado["conectado"] = False
