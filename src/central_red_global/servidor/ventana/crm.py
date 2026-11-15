@@ -114,24 +114,43 @@ class VentanaMiniWebCRM(QDialog):
 
         lay.addLayout(barra)
 
-        # Contenedor Web
+        self._panel_nativo = None
+        self._visor_web = None
+
+        # Contenedor: Intenta QWebEngineView y ante cualquier fallo activa el Panel Nativo
+        usar_panel_nativo = False
         try:
             from PyQt6.QtWebEngineWidgets import QWebEngineView
 
-            self.visor = QWebEngineView(self)
-            self.visor.setUrl(QUrl(self.url_web))
-            lay.addWidget(self.visor, 1)
+            self._visor_web = QWebEngineView(self)
+            self._visor_web.setUrl(QUrl(self.url_web))
+            self._visor_web.loadFinished.connect(self._al_terminar_carga_web)
+            lay.addWidget(self._visor_web, 1)
         except Exception as exc:
-            logger.warning(f"No se pudo inicializar QWebEngineView, abriendo en navegador: {exc}")
-            # Mensaje informativo
-            lbl_fallback = QLabel(
-                f"Abriendo la Mini Web en tu navegador predeterminado:\n\n{self.url_web}\n\n"
-                "Podés configurarla allí con total comodidad."
-            )
-            lbl_fallback.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            lbl_fallback.setStyleSheet("color: #E2E8F0; font-size: 14px; padding: 40px;")
-            lay.addWidget(lbl_fallback, 1)
-            self._abrir_en_navegador()
+            logger.info(f"QWebEngineView no disponible en este entorno ({exc}). Activando Panel Nativo moderno.")
+            usar_panel_nativo = True
+
+        if usar_panel_nativo:
+            self._activar_panel_nativo(lay)
+
+    def _al_terminar_carga_web(self, ok: bool) -> None:
+        if not ok and self._panel_nativo is None:
+            logger.warning("Fallo de renderizado en QWebEngineView, conmutando a Panel Nativo moderno.")
+            lay = self.layout()
+            if self._visor_web and lay:
+                lay.removeWidget(self._visor_web)
+                self._visor_web.deleteLater()
+                self._visor_web = None
+            self._activar_panel_nativo(lay)
+
+    def _activar_panel_nativo(self, lay) -> None:
+        if self._panel_nativo is not None:
+            return
+        from src.central_red_global.servidor.ventana.panel_nativo import PanelNativoCRM
+
+        self._panel_nativo = PanelNativoCRM(self)
+        if lay:
+            lay.addWidget(self._panel_nativo, 1)
 
     def _abrir_en_navegador(self) -> None:
         try:

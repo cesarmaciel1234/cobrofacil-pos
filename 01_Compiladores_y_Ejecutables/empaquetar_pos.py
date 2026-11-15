@@ -240,6 +240,10 @@ def argumentos() -> list[str]:
         "--add-data",
         "src/carteleria/creador_png/static;src/carteleria/creador_png/static",
         "--add-data",
+        "src/central_red_global/servidor/crm_salida/web/templates;src/central_red_global/servidor/crm_salida/web/templates",
+        "--add-data",
+        "src/central_red_global/servidor/crm_salida/web/static;src/central_red_global/servidor/crm_salida/web/static",
+        "--add-data",
         "Catalogos;Catalogos",
         "main.py",
     ]

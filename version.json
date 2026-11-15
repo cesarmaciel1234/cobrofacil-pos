@@ -1,7 +1,7 @@
 {
-  "app_version": "v50.46",
+  "app_version": "v50.47",
   "channel": "stable",
-  "build_date": "2026-11-14 21:26:17",
+  "build_date": "2026-11-15 16:59:34",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -30,7 +30,7 @@
     },
     "carteleria_datos.sello": {
       "version": "1.0.0",
-      "checksum": "45d5b9ea66ee67499fa17fe333cd623d",
+      "checksum": "4fbaf0d2a597f8e5f0ac5a09424e8001",
       "channel": "stable",
       "size": 19
     },
@@ -1366,18 +1366,6 @@
       "channel": "stable",
       "size": 8554
     },
-    "punpro.db-shm": {
-      "version": "1.0.0",
-      "checksum": "6dc8b2bdceb8e7e8f77494f41a3a03e8",
-      "channel": "stable",
-      "size": 32768
-    },
-    "punpro.db-wal": {
-      "version": "1.0.0",
-      "checksum": "cb5b9d53463c207d450fe1056f54290c",
-      "channel": "stable",
-      "size": 4404312
-    },
     "README.md": {
       "version": "1.0.0",
       "checksum": "5a365aa6888336cc7b94aef6cadaaaf2",
@@ -1656,9 +1644,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "1b6000e4f1c4dafd1a5f0ef85a0653ab",
+      "checksum": "e325ed243b74210b1bcf354ae2e9ee20",
       "channel": "stable",
-      "size": 1258926
+      "size": 1264244
     },
     "_bump_v5019.py": {
       "version": "1.0.0",
@@ -1806,9 +1794,9 @@
     },
     "01_Compiladores_y_Ejecutables/empaquetar_pos.py": {
       "version": "1.0.0",
-      "checksum": "846c5fac0cadad05a48367e32f496cd7",
+      "checksum": "3e56d75e744b01368c7dee23fc5684e8",
       "channel": "stable",
-      "size": 8318
+      "size": 8610
     },
     "01_Compiladores_y_Ejecutables/generar_version.py": {
       "version": "1.0.0",
@@ -10452,9 +10440,9 @@
     },
     "src/central_red_global/servidor/crm_salida/vigilante.py": {
       "version": "1.0.0",
-      "checksum": "4449e05558e6972b77074f276e2a15ff",
+      "checksum": "2a06f1fdf53c4b7ca12bd5d43cd0fbae",
       "channel": "stable",
-      "size": 9891
+      "size": 10731
     },
     "src/central_red_global/servidor/crm_salida/__init__.py": {
       "version": "1.0.0",
@@ -10470,9 +10458,9 @@
     },
     "src/central_red_global/servidor/crm_salida/motor/estado.py": {
       "version": "1.0.0",
-      "checksum": "a0c4aa658678c58a8963e771d76d3b3a",
+      "checksum": "ada3b54a71937c2b268759a66f8c8635",
       "channel": "stable",
-      "size": 5550
+      "size": 5648
     },
     "src/central_red_global/servidor/crm_salida/motor/README.md": {
       "version": "1.0.0",
@@ -10482,9 +10470,9 @@
     },
     "src/central_red_global/servidor/crm_salida/motor/subida.py": {
       "version": "1.0.0",
-      "checksum": "9febeec488fd30344e2ae1987378222b",
+      "checksum": "4ae95d28d051b8b8c5966ec6a15a99af",
       "channel": "stable",
-      "size": 18172
+      "size": 24397
     },
     "src/central_red_global/servidor/crm_salida/motor/__init__.py": {
       "version": "1.0.0",
@@ -10500,9 +10488,9 @@
     },
     "src/central_red_global/servidor/crm_salida/web/servidor_web.py": {
       "version": "1.0.0",
-      "checksum": "6401af8935110b5c4220a3499acf5725",
+      "checksum": "9772d1de45b15c856408fb54e4be49ff",
       "channel": "stable",
-      "size": 14478
+      "size": 15163
     },
     "src/central_red_global/servidor/crm_salida/web/__init__.py": {
       "version": "1.0.0",
@@ -10512,9 +10500,9 @@
     },
     "src/central_red_global/servidor/crm_salida/web/static/app.js": {
       "version": "1.0.0",
-      "checksum": "658cba9f4a6115a6569dc44de6b53e79",
+      "checksum": "c1992789c4ea63a426654a29428e1353",
       "channel": "stable",
-      "size": 10129
+      "size": 12197
     },
     "src/central_red_global/servidor/crm_salida/web/static/estilo.css": {
       "version": "1.0.0",
@@ -10524,9 +10512,9 @@
     },
     "src/central_red_global/servidor/crm_salida/web/templates/index.html": {
       "version": "1.0.0",
-      "checksum": "0878203991cbe3d295c807f074baa398",
+      "checksum": "b2f9d0ab9dcbcd7c0e40ebc93d87b4ae",
       "channel": "stable",
-      "size": 5670
+      "size": 5682
     },
     "src/central_red_global/servidor/oficio/agente.py": {
       "version": "1.0.0",
@@ -10680,9 +10668,9 @@
     },
     "src/central_red_global/servidor/ventana/crm.py": {
       "version": "1.0.0",
-      "checksum": "408c077ec9be56ef5f492257a1e60af9",
+      "checksum": "f3316fb2acbe16fafe96b5dc7e7dfadd",
       "channel": "stable",
-      "size": 6453
+      "size": 7137
     },
     "src/central_red_global/servidor/ventana/grilla.py": {
       "version": "1.0.0",
@@ -10696,6 +10684,12 @@
       "channel": "stable",
       "size": 6802
     },
+    "src/central_red_global/servidor/ventana/panel_nativo.py": {
+      "version": "1.0.0",
+      "checksum": "2cd034bf55998a78429e9e9cc54ba98c",
+      "channel": "stable",
+      "size": 26416
+    },
     "src/central_red_global/servidor/ventana/presencia.py": {
       "version": "1.0.0",
       "checksum": "15967ecb400d2f87cc55e8816dee6700",
@@ -10704,9 +10698,9 @@
     },
     "src/central_red_global/servidor/ventana/README.md": {
       "version": "1.0.0",
-      "checksum": "7ee3fd7fcc58e86d7d589724a268ed49",
+      "checksum": "5d415c09957c6a01525d118c2955b8ed",
       "channel": "stable",
-      "size": 5137
+      "size": 5297
     },
     "src/central_red_global/servidor/ventana/tablero.py": {
       "version": "1.0.0",
@@ -15525,6 +15519,12 @@
       "checksum": "4fba0107891f36f1750b485338992375",
       "channel": "stable",
       "size": 4899
+    },
+    "tests/test_crm_panel_nativo.py": {
+      "version": "1.0.0",
+      "checksum": "c27cf42cbbc7b146ff667105907ff77f",
+      "channel": "stable",
+      "size": 1508
     },
     "tests/test_cuentas_multi_token.py": {
       "version": "1.0.0",

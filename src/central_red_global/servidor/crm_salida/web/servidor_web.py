@@ -11,6 +11,7 @@ import logging
 import mimetypes
 import os
 import socket
+import sys
 import threading
 import time
 from http import HTTPStatus
@@ -30,6 +31,22 @@ _servidor_http: ThreadingHTTPServer | None = None
 _hilo_servidor: threading.Thread | None = None
 _candado_servidor = threading.Lock()
 _puerto_activo: int = 0
+
+
+def _resolver_directorio_web() -> str:
+    """Resuelve la ruta donde residen templates y static, compatible con desarrollo y PyInstaller."""
+    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+        base_mei = getattr(sys, "_MEIPASS")
+        candidatos = [
+            os.path.join(base_mei, "src", "central_red_global", "servidor", "crm_salida", "web"),
+            os.path.join(base_mei, "crm_salida", "web"),
+            os.path.join(base_mei, "web"),
+            base_mei,
+        ]
+        for c in candidatos:
+            if os.path.exists(os.path.join(c, "templates", "index.html")):
+                return c
+    return os.path.dirname(os.path.abspath(__file__))
 
 
 def _buscar_puerto_libre(puerto_inicial: int = _PUERTO_BASE) -> int:
@@ -87,7 +104,7 @@ class MiniWebHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         ruta = parsed.path
 
-        directorio_actual = os.path.dirname(os.path.abspath(__file__))
+        directorio_actual = _resolver_directorio_web()
 
         if ruta == "/" or ruta == "/index.html":
             archivo = os.path.join(directorio_actual, "templates", "index.html")
