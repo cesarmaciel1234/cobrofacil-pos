@@ -1,7 +1,7 @@
 {
-  "app_version": "v50.47",
+  "app_version": "v50.48",
   "channel": "stable",
-  "build_date": "2026-11-15 16:59:34",
+  "build_date": "2026-11-15 18:04:19",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -1644,7 +1644,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "e325ed243b74210b1bcf354ae2e9ee20",
+      "checksum": "237212c4b1bc8007ab81a784e2e28247",
       "channel": "stable",
       "size": 1264244
     },
@@ -6012,9 +6012,9 @@
     },
     "src/base_de_datos/migrations/migrator.py": {
       "version": "1.0.0",
-      "checksum": "393e0a24c7f6f341f51120e2f4952fe6",
+      "checksum": "109c885dfdcdbf6e3700e6ee5687b461",
       "channel": "stable",
-      "size": 38335
+      "size": 38783
     },
     "src/base_de_datos/migrations/README.md": {
       "version": "1.0.0",
@@ -10668,9 +10668,9 @@
     },
     "src/central_red_global/servidor/ventana/crm.py": {
       "version": "1.0.0",
-      "checksum": "f3316fb2acbe16fafe96b5dc7e7dfadd",
+      "checksum": "10beb4b0ed744e771bbefa24498c19ad",
       "channel": "stable",
-      "size": 7137
+      "size": 5905
     },
     "src/central_red_global/servidor/ventana/grilla.py": {
       "version": "1.0.0",
@@ -15270,9 +15270,9 @@
     },
     "src/utils/letra.py": {
       "version": "1.0.0",
-      "checksum": "812f778c62ec2a54f9ca518c429ce915",
+      "checksum": "61971372701d5b486417e0057e8faec7",
       "channel": "stable",
-      "size": 1269
+      "size": 1392
     },
     "src/utils/medio_pago.py": {
       "version": "1.0.0",
