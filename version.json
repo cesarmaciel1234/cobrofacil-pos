@@ -1,7 +1,7 @@
 {
-  "app_version": "v50.50",
+  "app_version": "v50.51",
   "channel": "stable",
-  "build_date": "2026-11-15 20:35:57",
+  "build_date": "2026-11-15 20:51:40",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -1644,7 +1644,7 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "74a587d8ededd9a869032968eadcd2b7",
+      "checksum": "da2a061464be8082e0dba00e66b1b3f5",
       "channel": "stable",
       "size": 1264244
     },
@@ -10470,9 +10470,9 @@
     },
     "src/central_red_global/servidor/crm_salida/motor/subida.py": {
       "version": "1.0.0",
-      "checksum": "4ae95d28d051b8b8c5966ec6a15a99af",
+      "checksum": "2813d1c6b670c7513cd80d51283ed88b",
       "channel": "stable",
-      "size": 24397
+      "size": 24889
     },
     "src/central_red_global/servidor/crm_salida/motor/__init__.py": {
       "version": "1.0.0",
@@ -10686,9 +10686,9 @@
     },
     "src/central_red_global/servidor/ventana/panel_nativo.py": {
       "version": "1.0.0",
-      "checksum": "525191cd18b67caaaa54cf65120690d5",
+      "checksum": "0f43a19506e36ff69f8c65da700bc162",
       "channel": "stable",
-      "size": 27850
+      "size": 31679
     },
     "src/central_red_global/servidor/ventana/presencia.py": {
       "version": "1.0.0",
@@ -15522,9 +15522,9 @@
     },
     "tests/test_crm_panel_nativo.py": {
       "version": "1.0.0",
-      "checksum": "c356891e32726a0202f076a3525e9dc7",
+      "checksum": "a5a1c9e74b406c9965292f095a12fd6d",
       "channel": "stable",
-      "size": 2117
+      "size": 2777
     },
     "tests/test_cuentas_multi_token.py": {
       "version": "1.0.0",

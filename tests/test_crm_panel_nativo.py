@@ -64,3 +64,25 @@ def test_panel_nativo_guarda_cambio_sucursal_inmediato():
         if suc_ant:
             config.set("crm_sucursal", suc_ant)
             config.set("crm_sucursal_id", "1")
+
+
+def test_evaluar_disponibilidad_id():
+    panel = PanelNativoCRM()
+    panel._al_recibir_sucursales([
+        {"id": 1, "nombre": "Maciel"},
+        {"id": 2, "nombre": "alfaro 1954"},
+    ])
+
+    # Caso 1: ID 2 coincide
+    panel.txt_sucursal_id.setText("2")
+    panel.txt_sucursal.setText("alfaro 1954")
+    panel._evaluar_disponibilidad_id()
+    assert "asignado" in panel.lbl_sucursal_info.text().lower()
+
+    # Caso 2: ID 3 disponible
+    panel.txt_sucursal_id.setText("3")
+    panel.txt_sucursal.setText("Sucursal Nueva")
+    panel._evaluar_disponibilidad_id()
+    assert "disponible" in panel.lbl_sucursal_info.text().lower()
+
+    panel.deleteLater()

@@ -35,6 +35,7 @@ class _HilosConexion(QObject):
     """Manejo seguro de señales entre el hilo de red y la interfaz Qt."""
 
     sig_terminado = pyqtSignal(bool, str, str, str)  # ok, titulo, detalle, empresa_id
+    sig_sucursales = pyqtSignal(list)
 
 
 def _estilo_panel() -> str:
@@ -238,12 +239,15 @@ class PanelNativoCRM(QWidget):
         self.setStyleSheet(_estilo_panel())
         self._senales = _HilosConexion()
         self._senales.sig_terminado.connect(self._al_terminar_conexion)
+        self._senales.sig_sucursales.connect(self._al_recibir_sucursales)
+        self._sucursales_nube: list[dict] = []
         self._en_proceso = False
 
         self._construir_ui()
         self._cargar_datos_existentes()
         self._conectar_guardado_automatico()
         self._refrescar_estado()
+        self._consultar_sucursales_en_fondo()
 
         # Temporizador para refrescar telemetría y estado
         self._timer = QTimer(self)
@@ -412,6 +416,12 @@ class PanelNativoCRM(QWidget):
         fila_suc.addLayout(caja_nom, 1)
         t_lay.addLayout(fila_suc)
 
+        # Indicador en vivo de estado y disponibilidad de ID de Sucursal
+        self.lbl_sucursal_info = QLabel("")
+        self.lbl_sucursal_info.setObjectName("InfoSucursalNube")
+        self.lbl_sucursal_info.setWordWrap(True)
+        t_lay.addWidget(self.lbl_sucursal_info)
+
         # Telemetría Grid (4 cajas compactas)
         tele_box = QHBoxLayout()
         tele_box.setSpacing(8)
@@ -561,6 +571,10 @@ class PanelNativoCRM(QWidget):
         self.txt_sucursal_id.returnPressed.connect(self._al_click_conectar)
         self.txt_sucursal.returnPressed.connect(self._al_click_conectar)
 
+        # Validación en vivo de disponibilidad de ID al escribir
+        self.txt_sucursal_id.textChanged.connect(self._evaluar_disponibilidad_id)
+        self.txt_sucursal.textChanged.connect(self._evaluar_disponibilidad_id)
+
     def _guardar_config_local_silencioso(self) -> None:
         """Guarda inmediatamente los valores locales en config.json sin depender de la red."""
         try:
@@ -670,6 +684,8 @@ class PanelNativoCRM(QWidget):
             ok, empresa_id, detalle, sucursales = probar_conexion(url, empresa, password)
             nombre_sucursal = sucursal
             suc_id = sucursal_id
+            if sucursales:
+                self._senales.sig_sucursales.emit(sucursales)
             if ok:
                 if sucursales:
                     coincidente = next(
@@ -729,3 +745,56 @@ class PanelNativoCRM(QWidget):
         self.btn_conectar.setText("🚀 Conectar y Enlazar")
         self.btn_reconectar.setEnabled(True)
         self._refrescar_estado()
+
+    def _consultar_sucursales_en_fondo(self) -> None:
+        """Consulta en segundo plano la lista de sucursales para validar el ID en tiempo real."""
+        def _fondo() -> None:
+            try:
+                from src.config import config
+
+                url = str(config.get("crm_url") or "https://crm-frigorifico.onrender.com").strip().rstrip("/")
+                user = str(config.get("crm_usuario") or config.get("crm_empresa") or "").strip()
+                pwd = str(config.get("crm_password") or config.get("crm_api_key") or "").strip()
+                if url and user and pwd:
+                    from src.central_red_global.servidor.crm_salida.motor.subida import probar_conexion
+
+                    ok, _, _, sucursales = probar_conexion(url, user, pwd, timeout=20, intentos=1)
+                    if ok and sucursales:
+                        self._senales.sig_sucursales.emit(sucursales)
+            except Exception:
+                pass
+
+        t = threading.Thread(target=_fondo, daemon=True)
+        t.start()
+
+    def _al_recibir_sucursales(self, sucursales: list[dict]) -> None:
+        self._sucursales_nube = sucursales
+        self._evaluar_disponibilidad_id()
+
+    def _evaluar_disponibilidad_id(self) -> None:
+        cur_id = self.txt_sucursal_id.text().strip()
+        nom_actual = self.txt_sucursal.text().strip()
+        if not cur_id:
+            self.lbl_sucursal_info.setText("")
+            return
+
+        if not self._sucursales_nube:
+            self.lbl_sucursal_info.setText("💡 ID asignado a este local. Si es el segundo local, use ID 2.")
+            self.lbl_sucursal_info.setStyleSheet("color: #94A3B8; font-size: 11px;")
+            return
+
+        coincidente = next((s for s in self._sucursales_nube if str(s.get("id")) == cur_id), None)
+        if coincidente:
+            nom_nube = str(coincidente.get("nombre") or "").strip()
+            if nom_actual.lower() == nom_nube.lower():
+                self.lbl_sucursal_info.setText(f"🟢 ID #{cur_id} asignado a '{nom_nube}' en la nube.")
+                self.lbl_sucursal_info.setStyleSheet("color: #34D399; font-size: 11px; font-weight: 700;")
+            elif cur_id == "1" and ("alfaro" in nom_actual.lower() or "2" in nom_actual.lower()):
+                self.lbl_sucursal_info.setText(f"⚠️ ID #1 pertenece a '{nom_nube}' (Casa Central). Para una sucursal separada use ID 2.")
+                self.lbl_sucursal_info.setStyleSheet("color: #FBBF24; font-size: 11px; font-weight: 700;")
+            else:
+                self.lbl_sucursal_info.setText(f"ℹ️ ID #{cur_id} registrado en la nube como '{nom_nube}'. Al enlazar se actualizará a '{nom_actual}'.")
+                self.lbl_sucursal_info.setStyleSheet("color: #60A5FA; font-size: 11px; font-weight: 600;")
+        else:
+            self.lbl_sucursal_info.setText(f"✅ ID #{cur_id} 100% DISPONIBLE (Se registrará como nueva sucursal en la nube).")
+            self.lbl_sucursal_info.setStyleSheet("color: #34D399; font-size: 11px; font-weight: 700;")
