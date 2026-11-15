@@ -112,8 +112,8 @@ class GestorEstado:
     def registrar_exito(
         self,
         *,
-        tablas: int = 0,
-        filas: int = 0,
+        tablas: int | None = None,
+        filas: int | None = None,
         empresa: str | None = None,
         sucursal: str | None = None,
         mensaje: str = "Conectado y sincronizado con éxito",
@@ -126,9 +126,10 @@ class GestorEstado:
                 self._estado["empresa"] = empresa
             if sucursal:
                 self._estado["sucursal"] = sucursal
-            self._estado["ultimo_envio"] = time.strftime("%Y-%m-%d %H:%M:%S")
-            self._estado["filas_totales"] = filas
-            self._estado["tablas_totales"] = tablas
+            if tablas is not None or filas is not None:
+                self._estado["ultimo_envio"] = time.strftime("%Y-%m-%d %H:%M:%S")
+                self._estado["filas_totales"] = filas or 0
+                self._estado["tablas_totales"] = tablas or 0
             self._estado["ultimo_error"] = None
             self._estado["actualizado_en"] = time.time()
             self._guardar_disco()

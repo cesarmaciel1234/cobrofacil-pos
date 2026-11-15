@@ -53,6 +53,45 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
+  const CLAVE_COPIA = "enlace-nube-estado";
+
+  function leerCopia() {
+    try {
+      const crudo = localStorage.getItem(CLAVE_COPIA);
+      return crudo ? JSON.parse(crudo) : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function guardarCopia(data) {
+    if (!data || typeof data !== "object") return;
+    const copia = Object.assign({}, data);
+    delete copia.password;
+    delete copia.crm_password;
+    try {
+      localStorage.setItem(CLAVE_COPIA, JSON.stringify(copia));
+    } catch (err) {}
+  }
+
+  function avisarOffline() {
+    if (!statusBanner) return;
+    statusBanner.className = "status-pill-banner desconectado";
+    if (statusTitle) statusTitle.textContent = "🛡️ MOTOR DESACOPLADO";
+    if (statusDesc) statusDesc.textContent = "Motor desacoplado / Operando 100% offline. La caja sigue vendiendo.";
+    if (errorBox) errorBox.classList.remove("active");
+  }
+
+  function despertarNube(url) {
+    const base = String(url || "").trim().replace(/\/$/, "");
+    if (!base) return Promise.resolve();
+    const corte = new AbortController();
+    const reloj = setTimeout(() => corte.abort(), 8000);
+    return fetch(base + "/health", { mode: "no-cors", cache: "no-store", signal: corte.signal })
+      .catch(() => {})
+      .finally(() => clearTimeout(reloj));
+  }
+
   // Renderizar estado visual
   function renderEstado(data) {
     if (!data) return;
@@ -117,16 +156,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Cargar estado inicial
+  // Cargar estado. La copia local ya está pintada; esto solo la refresca.
   async function cargarEstado() {
     try {
       const res = await fetch("/api/estado");
-      if (res.ok) {
-        const data = await res.json();
-        renderEstado(data);
-      }
+      if (!res.ok) throw new Error("estado");
+      const data = await res.json();
+      guardarCopia(data);
+      renderEstado(data);
     } catch (err) {
-      console.warn("No se pudo obtener estado:", err);
+      avisarOffline();
     }
   }
 
@@ -224,28 +263,43 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Botón Sincronizar Ahora
-  btnSincronizar.addEventListener("click", async () => {
+  // Botón Sincronizar Ahora: despierta Render y pide el empuje de lo nuevo.
+  if (btnSincronizar) btnSincronizar.addEventListener("click", async () => {
+    if (!navigator.onLine) {
+      avisarOffline();
+      return;
+    }
+    const texto = btnSincronizar.textContent;
     btnSincronizar.disabled = true;
     btnSincronizar.textContent = "⏳ Enviando...";
+    if (statusDesc) statusDesc.textContent = "Despertando la nube y enviando lo nuevo de esta sucursal.";
     try {
-      const resp = await fetch("/api/sincronizar", { method: "POST" });
-      const data = await resp.json();
-      if (data.ok) {
-        statusDesc.textContent = "Sincronización en proceso en segundo plano (el servidor sigue vendiendo sin pausas).";
-      }
+      await despertarNube(urlInput.value);
+      const sucursalId = (sucursalIdInput.value || "1").trim();
+      const resp = await fetch("/api/sincronizar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenant_id: (empresaInput.value || "").trim(),
+          branch_id: sucursalId,
+          sucursal_id: sucursalId,
+          last_sync: (leerCopia() || {}).ultimo_envio || "",
+        }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok || data.ok === false) throw new Error(data.error || "sin enlace");
+      if (statusDesc) statusDesc.textContent = "El envío sigue en segundo plano. La caja no se detiene.";
+      await cargarEstado();
     } catch (err) {
-      console.warn("Error forzando sincronización:", err);
+      avisarOffline();
     } finally {
-      setTimeout(() => {
-        btnSincronizar.disabled = false;
-        btnSincronizar.textContent = "⚡ Sincronizar Ahora";
-        cargarEstado();
-      }, 3000);
+      btnSincronizar.disabled = false;
+      btnSincronizar.textContent = texto || "⚡ Sincronizar Ahora";
     }
   });
 
-  // Carga inicial y polling periódico cada 5 segundos
+  const copiaInicial = leerCopia();
+  if (copiaInicial) renderEstado(copiaInicial);
   cargarEstado();
   setInterval(cargarEstado, 5000);
 });

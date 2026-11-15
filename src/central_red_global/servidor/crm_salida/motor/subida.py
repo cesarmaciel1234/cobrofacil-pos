@@ -1,8 +1,8 @@
 """Motor de subida y transporte al CRM en la Nube (Render + Neon DB).
 
 Aislado y desacoplado:
-- Abre la base local exclusivamente en modo solo lectura (`mode=ro`).
-- Nunca bloquea MariaDB ni el cobro en las cajas.
+- La maestra lee MariaDB en solo lectura. La esclava lee su SQLite.
+- No escribe en la caja ni en MariaDB.
 - Filtra claves y secretos antes de enviar a la nube.
 - Maneja cold start de Render (reintentos 502/503/504).
 - Divide en lotes de 150 filas para no saturar memoria.
@@ -48,7 +48,9 @@ COLUMNAS_CLIENTES = (
 
 
 def leer_clientes(ruta_db: str) -> list[dict]:
-    """Lee la tabla clientes de punpro.db en modo solo lectura estricto."""
+    """Lee clientes. En la maestra salen de MariaDB; en la esclava, de su SQLite."""
+    if os.environ.get("CRM_ORIGEN") == "mariadb":
+        return _clientes_mariadb()
     conn = sqlite3.connect(f"file:{ruta_db}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
     try:
@@ -96,7 +98,7 @@ def huella(clientes: list[dict], marca: str = "") -> str:
 def manifiesto(ruta_db: str) -> str:
     """Firma de toda la base. Cambia si cambia cualquier tabla."""
     trozos = []
-    for tabla, columnas, filas in leer_base(ruta_db):
+    for tabla, columnas, filas in _fuente(ruta_db):
         trozos.append(
             json.dumps(
                 {"tabla": tabla, "columnas": columnas, "filas": filas},
@@ -108,10 +110,144 @@ def manifiesto(ruta_db: str) -> str:
     return hashlib.sha256("\n".join(trozos).encode("utf-8")).hexdigest()
 
 
+def _fuente(ruta_db: str):
+    if os.environ.get("CRM_ORIGEN") == "mariadb":
+        return leer_mariadb()
+    return leer_base(ruta_db)
+
+
+def _conexion_mariadb():
+    """Lectura de la maestra. Si MariaDB no está, no se usa la copia SQLite."""
+    import pymysql
+    from src.base_de_datos.database import db_manager
+
+    if getattr(db_manager, "db_engine_type", "") != "mariadb" or getattr(db_manager, "_forced_local_offline", False):
+        raise RuntimeError("La maestra no tiene MariaDB abierta")
+    motor = getattr(db_manager, "mariadb_engine", None)
+    if motor is None:
+        raise RuntimeError("La maestra no tiene MariaDB abierta")
+    datos = motor._connect_kwargs()
+    datos.update(connect_timeout=5, read_timeout=120, write_timeout=10)
+    conn = pymysql.connect(**datos)
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SET SESSION TRANSACTION READ ONLY")
+    except Exception:
+        pass
+    return conn
+
+
+def _clientes_mariadb() -> list[dict]:
+    conn = _conexion_mariadb()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT COLUMN_NAME FROM information_schema.COLUMNS "
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clientes' ORDER BY ORDINAL_POSITION"
+            )
+            existentes = {row[0] for row in cur.fetchall()}
+        cols = [c for c in COLUMNAS_CLIENTES if c in existentes]
+        if "nombre" not in cols:
+            raise RuntimeError("La tabla clientes de MariaDB no tiene nombre")
+        with conn.cursor() as cur:
+            cur.execute(f"SELECT {', '.join('`'+c+'`' for c in cols)} FROM `clientes` ORDER BY `nombre`")
+            crudas = cur.fetchall()
+    finally:
+        conn.close()
+    clientes = []
+    for cruda in crudas:
+        item = {col: _plano(valor) for col, valor in zip(cols, cruda)}
+        nombre = str(item.get("nombre") or "").strip()
+        if not nombre:
+            continue
+        item["nombre"] = nombre
+        clientes.append(item)
+    return clientes
+
+
+def leer_mariadb():
+    """Tablas de la maestra, solo lectura. Misma forma que la copia SQLite."""
+    conn = _conexion_mariadb()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT TABLE_NAME FROM information_schema.TABLES "
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME"
+            )
+            nombres = [row[0] for row in cur.fetchall()]
+        for nombre in nombres:
+            if not _TABLA.match(str(nombre)):
+                continue
+            with conn.cursor() as cur:
+                cur.execute(f"SELECT * FROM `{nombre}`")
+                columnas = [d[0] for d in cur.description] if cur.description else []
+                crudas = cur.fetchall()
+            yield nombre, columnas, _limpiar_filas(nombre, columnas, crudas)
+    finally:
+        conn.close()
+
+
 def _plano(valor):
     if isinstance(valor, bytes):
         return valor.decode("utf-8", errors="replace")
+    if hasattr(valor, "isoformat"):
+        return valor.isoformat(sep=" ")
+    try:
+        from decimal import Decimal
+
+        if isinstance(valor, Decimal):
+            return format(valor, "f")
+    except Exception:
+        pass
     return valor
+
+
+def _limpiar_filas(nombre, columnas, crudas):
+    idx_clave = next(
+        (i for i, col in enumerate(columnas) if col.lower() in ("clave", "key", "nombre")),
+        None,
+    )
+    idx_valor = next(
+        (i for i, col in enumerate(columnas) if col.lower() in ("valor", "value")),
+        None,
+    )
+    filas = []
+    for cruda in crudas:
+        fila = [_plano(valor) for valor in cruda]
+        for i, col in enumerate(columnas):
+            if _clave_secreta(col):
+                fila[i] = None
+        if (
+            idx_clave is not None
+            and idx_valor is not None
+            and _clave_secreta(str(fila[idx_clave] or ""))
+        ):
+            fila[idx_valor] = None
+        filas.append(fila)
+    if nombre == "configuracion" and idx_clave is not None and idx_valor is not None:
+        presentes = {str(fila[idx_clave]) for fila in filas}
+        try:
+            from src.config import config
+
+            politica = {
+                "fiado_mantenimiento_pct": config.get("fiado_mantenimiento_pct", 5),
+                "fiado_apalancamiento_pct": config.get("fiado_apalancamiento_pct", 5),
+                "fiado_plazo_dias": config.get("fiado_plazo_dias", 30),
+            }
+        except Exception:
+            politica = {
+                "fiado_mantenimiento_pct": 5,
+                "fiado_apalancamiento_pct": 5,
+                "fiado_plazo_dias": 30,
+            }
+        for clave, valor in politica.items():
+            if clave in presentes:
+                continue
+            extra = [None] * len(columnas)
+            extra[idx_clave] = clave
+            extra[idx_valor] = valor
+            filas.append(extra)
+    return filas
 
 
 def _clave_secreta(texto: str) -> bool:
@@ -134,51 +270,7 @@ def leer_base(ruta_db: str):
                 continue
             columnas = [col[1] for col in conn.execute(f'PRAGMA table_info("{nombre}")')]
             crudas = conn.execute(f'SELECT * FROM "{nombre}"').fetchall()
-            idx_clave = next(
-                (i for i, col in enumerate(columnas) if col.lower() in ("clave", "key", "nombre")),
-                None,
-            )
-            idx_valor = next(
-                (i for i, col in enumerate(columnas) if col.lower() in ("valor", "value")),
-                None,
-            )
-            filas = []
-            for cruda in crudas:
-                fila = [_plano(valor) for valor in cruda]
-                for i, col in enumerate(columnas):
-                    if _clave_secreta(col):
-                        fila[i] = None
-                if (
-                    idx_clave is not None
-                    and idx_valor is not None
-                    and _clave_secreta(str(fila[idx_clave] or ""))
-                ):
-                    fila[idx_valor] = None
-                filas.append(fila)
-            if nombre == "configuracion" and idx_clave is not None and idx_valor is not None:
-                presentes = {str(fila[idx_clave]) for fila in filas}
-                try:
-                    from src.config import config
-
-                    politica = {
-                        "fiado_mantenimiento_pct": config.get("fiado_mantenimiento_pct", 5),
-                        "fiado_apalancamiento_pct": config.get("fiado_apalancamiento_pct", 5),
-                        "fiado_plazo_dias": config.get("fiado_plazo_dias", 30),
-                    }
-                except Exception:
-                    politica = {
-                        "fiado_mantenimiento_pct": 5,
-                        "fiado_apalancamiento_pct": 5,
-                        "fiado_plazo_dias": 30,
-                    }
-                for clave, valor in politica.items():
-                    if clave in presentes:
-                        continue
-                    extra = [None] * len(columnas)
-                    extra[idx_clave] = clave
-                    extra[idx_valor] = valor
-                    filas.append(extra)
-            yield nombre, columnas, filas
+            yield nombre, columnas, _limpiar_filas(nombre, columnas, crudas)
     finally:
         conn.close()
 
@@ -205,6 +297,54 @@ def _pedir(abridor, req, timeout: int, intentos: int = 4):
     raise ultimo
 
 
+def ruta_estado(ruta_db: str) -> str:
+    nombre = "crm_filas_estado_mariadb.json" if os.environ.get("CRM_ORIGEN") == "mariadb" else "crm_filas_estado.json"
+    return os.path.join(os.path.dirname(ruta_db) or ".", "locks", nombre)
+
+
+def _huella_fila(fila) -> str:
+    crudo = json.dumps(fila, ensure_ascii=False, sort_keys=True, default=str)
+    return hashlib.sha256(crudo.encode("utf-8")).hexdigest()
+
+
+def _indice_id(columnas) -> int | None:
+    for i, col in enumerate(columnas):
+        if str(col).lower() == "id":
+            return i
+    return None
+
+
+def fotografiar(ruta_db: str) -> dict:
+    """Anota cada fila que ya está en la nube para no volver a mandarla."""
+    estado = {}
+    for tabla, columnas, filas in _fuente(ruta_db):
+        idx = _indice_id(columnas)
+        if idx is None:
+            estado[tabla] = {"modo": "tabla", "huella": _huella_fila(filas)}
+        else:
+            estado[tabla] = {
+                "modo": "id",
+                "filas": {str(fila[idx]): _huella_fila(fila) for fila in filas},
+            }
+    return estado
+
+
+def guardar_estado(ruta_db: str, estado: dict) -> None:
+    ruta = ruta_estado(ruta_db)
+    os.makedirs(os.path.dirname(ruta), exist_ok=True)
+    with open(ruta, "w", encoding="utf-8") as archivo:
+        json.dump(estado, archivo, ensure_ascii=False)
+
+
+def leer_estado(ruta_db: str) -> dict:
+    try:
+        with open(ruta_estado(ruta_db), encoding="utf-8") as archivo:
+            dato = json.load(archivo)
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return dato if isinstance(dato, dict) else {}
+
+
 def subir_base(
     crm_url: str,
     api_key: str,
@@ -216,12 +356,42 @@ def subir_base(
     timeout: int = 120,
     reentrar=None,
 ) -> dict:
-    """Sube cada tabla particionada en bloques de 150 filas."""
+    """Sube solo las filas que cambiaron. La primera vez anota el libro que ya está en la nube."""
     abridor = opener.open if opener is not None else urllib.request.urlopen
+    estado = leer_estado(ruta_db)
+    nuevo = dict(estado)
+    pendientes = []
+    for tabla, columnas, todas in _fuente(ruta_db):
+        idx = _indice_id(columnas)
+        previa = estado.get(tabla) or {}
+        if idx is None:
+            huella_tabla = _huella_fila(todas)
+            nuevo[tabla] = {"modo": "tabla", "huella": huella_tabla}
+            if previa.get("huella") == huella_tabla:
+                continue
+            pendientes.append((tabla, columnas, todas, [], "reemplazo"))
+            continue
+        actuales = {}
+        cambiadas = []
+        for fila in todas:
+            clave = str(fila[idx])
+            firma = _huella_fila(fila)
+            actuales[clave] = firma
+            if (previa.get("filas") or {}).get(clave) != firma:
+                cambiadas.append(fila)
+        bajas = [clave for clave in (previa.get("filas") or {}) if clave not in actuales]
+        nuevo[tabla] = {"modo": "id", "filas": actuales}
+        if not cambiadas and not bajas:
+            continue
+        pendientes.append((tabla, columnas, cambiadas, bajas, "delta"))
+    if not pendientes:
+        if nuevo != estado:
+            guardar_estado(ruta_db, nuevo)
+        return {"tablas": 0, "filas": 0, "errores": [], "delta": True}
     tablas_ok = 0
     filas = 0
     errores = []
-    for tabla, columnas, todas in leer_base(ruta_db):
+    for tabla, columnas, todas, bajas, modo in pendientes:
         partes = [todas[i : i + _TAMANO_PARTE] for i in range(0, len(todas), _TAMANO_PARTE)] or [[]]
         fallo = None
         for numero, bloque in enumerate(partes, start=1):
@@ -231,9 +401,15 @@ def subir_base(
                 "filas": bloque,
                 "parte": numero,
                 "partes": len(partes),
+                "modo": modo,
             }
+            if modo == "delta" and numero == len(partes):
+                cuerpo["bajas"] = bajas
             if sucursal_id not in (None, ""):
                 cuerpo["sucursal_id"] = int(sucursal_id)
+                cuerpo["branch_id"] = int(sucursal_id)
+            if empresa_id not in (None, ""):
+                cuerpo["tenant_id"] = str(empresa_id).strip()
             if sucursal:
                 cuerpo["sucursal"] = sucursal
             headers = {"Content-Type": "application/json"}
@@ -273,8 +449,10 @@ def subir_base(
             errores.append(fallo)
             continue
         tablas_ok += 1
-        filas += len(todas)
-    return {"tablas": tablas_ok, "filas": filas, "errores": errores}
+        filas += len(todas) + len(bajas)
+    if not errores:
+        guardar_estado(ruta_db, nuevo)
+    return {"tablas": tablas_ok, "filas": filas, "errores": errores, "delta": True}
 
 
 def resolver_empresa(crm_url: str, api_key: str, nombre: str, timeout: int = 20) -> str:

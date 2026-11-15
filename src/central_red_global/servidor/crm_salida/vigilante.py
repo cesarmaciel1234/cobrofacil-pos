@@ -20,12 +20,13 @@ logger = logging.getLogger("crm_salida")
 # Plan gratis. Neon se duerme a los 5 min y Render a los 15.
 # La tienda hace unos 70 tickets por día (pico 89). El libro completo
 # tarda cerca de una hora, así que no se manda en cada venta.
-# Se mira cada 15 min. Si cambió, sale como mucho una vez cada media hora.
+# Cada 30 min la tienda empuja lo nuevo. Si no hubo ventas, no llama a la nube.
 PAUSA_PRIMERA_SEG = 60.0
-PAUSA_VUELTA_SEG = 15 * 60.0
+PAUSA_VUELTA_SEG = 30 * 60.0
 MINIMO_ENTRE_ENVIOS_SEG = 30 * 60.0
 TOPE_ENVIO_SEG = 2 * 60 * 60
-# Más adelante queda en True: solo la maestra manda el dato centralizado.
+# Hoy la esclava también puede mandar su SQLite. El próximo paso es True:
+# solo la maestra empuja, y lo hace desde MariaDB.
 SOLO_MAESTRA = False
 
 _guardia = threading.Lock()
@@ -95,10 +96,22 @@ def turno(rol: str, credenciales: dict | None, lanzar, *, solo_maestra: bool = S
     return "enviado"
 
 
+def _marcar_origen() -> str:
+    """La maestra lee MariaDB. La esclava lee su SQLite."""
+    try:
+        rol = _rol()
+    except Exception:
+        rol = "esclava"
+    origen = "mariadb" if rol == "maestra" else "sqlite"
+    os.environ["CRM_ORIGEN"] = origen
+    return origen
+
+
 def lanzar(credenciales: dict) -> None:
-    """Otro proceso lee punpro.db y hace el POST. La clave no va en el comando."""
+    """Otro proceso lee la base y hace el POST. La clave no va en el comando."""
     from src.central_red_global.servidor.crm_salida.motor import huella, leer_clientes, manifiesto
 
+    _marcar_origen()
     ruta_db = ruta_punpro()
     clientes = leer_clientes(ruta_db)
     marca = "|".join(
@@ -121,7 +134,17 @@ def lanzar(credenciales: dict) -> None:
     except OSError:
         previa = ""
     if previa == firma:
-        logger.info("CRM  la base sigue igual. No se reenvía.")
+        from src.central_red_global.servidor.crm_salida.motor.subida import (
+            fotografiar,
+            guardar_estado,
+            ruta_estado,
+        )
+
+        if not os.path.isfile(ruta_estado(ruta_db)):
+            guardar_estado(ruta_db, fotografiar(ruta_db))
+            logger.info("CRM  la nube ya tiene este libro. Desde ahora solo salen los cambios.")
+        else:
+            logger.info("CRM  la base sigue igual. No se reenvía.")
         return
     try:
         with open(ruta_cuando, encoding="utf-8") as archivo:
@@ -144,6 +167,7 @@ def lanzar(credenciales: dict) -> None:
     entorno["CRM_SUCURSAL_ID"] = str(credenciales.get("sucursal_id") or "")
     entorno["CRM_SUCURSAL"] = credenciales.get("sucursal") or ""
     entorno["PUNPRO_DB"] = ruta_punpro()
+    entorno["CRM_ORIGEN"] = os.environ.get("CRM_ORIGEN") or "sqlite"
     proc = subprocess.Popen(
         [programa, *args],
         env=entorno,
