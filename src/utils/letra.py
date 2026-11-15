@@ -30,16 +30,19 @@ def fuente_numero(px: int = 11) -> QFont:
     return fuente_nombre(px)
 
 
-def vestir_id(item: QTableWidgetItem) -> QTableWidgetItem:
-    item.setFont(fuente_id())
+def vestir_id(item, px: int = 10, tam: int | None = None):
+    t = tam if tam is not None else px
+    item.setFont(fuente_id(t))
     return item
 
 
-def vestir_nombre(item: QTableWidgetItem) -> QTableWidgetItem:
-    item.setFont(fuente_nombre())
+def vestir_nombre(item, px: int = 11, tam: int | None = None):
+    t = tam if tam is not None else px
+    item.setFont(fuente_nombre(t))
     return item
 
 
-def vestir_numero(item: QTableWidgetItem) -> QTableWidgetItem:
-    item.setFont(fuente_numero())
+def vestir_numero(item, px: int = 11, tam: int | None = None):
+    t = tam if tam is not None else px
+    item.setFont(fuente_numero(t))
     return item

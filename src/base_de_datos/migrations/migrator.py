@@ -736,6 +736,21 @@ class MigratorMixin:
         """MariaDB: BIGINT en productos.id si hace falta; utf8mb4 en tickets. Sin DDL en cada arranque."""
         if getattr(self, "db_engine_type", "sqlite") != "mariadb":
             return
+        if getattr(self, "_forced_local_offline", False):
+            return
+        test_conn = None
+        try:
+            test_conn = self.get_connection()
+            if isinstance(test_conn, sqlite3.Connection):
+                return
+        except Exception:
+            return
+        finally:
+            if test_conn:
+                try:
+                    test_conn.close()
+                except Exception:
+                    pass
         try:
             tipo = ""
             rows = self.execute_query(
