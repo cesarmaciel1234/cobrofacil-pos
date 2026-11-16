@@ -111,6 +111,7 @@ class GestorEstado:
     def registrar_conectando(self, url: str, empresa: str, sucursal: str) -> None:
         with self._lock:
             self._estado["conectado"] = False
+            self._estado["enlace_activo"] = False
             self._estado["estado_texto"] = "conectando"
             self._estado["mensaje"] = f"Conectando a {url}..."
             self._estado["url"] = url
@@ -130,6 +131,7 @@ class GestorEstado:
     ) -> None:
         with self._lock:
             self._estado["conectado"] = True
+            self._estado["enlace_activo"] = True
             self._estado["estado_texto"] = "conectado"
             self._estado["mensaje"] = mensaje
             if empresa:
@@ -137,8 +139,11 @@ class GestorEstado:
             if sucursal:
                 self._estado["sucursal"] = sucursal
             if tablas is not None or filas is not None:
-                self._estado["ultimo_envio"] = time.strftime("%Y-%m-%d %H:%M:%S")
+                marca = time.strftime("%Y-%m-%d %H:%M:%S")
+                self._estado["ultimo_envio"] = marca
+                self._estado["ultimo_envio_exitoso"] = marca
                 self._estado["filas_totales"] = filas or 0
+                self._estado["filas_enviadas"] = filas or 0
                 self._estado["tablas_totales"] = tablas or 0
             self._estado["ultimo_error"] = None
             self._estado["actualizado_en"] = time.time()
@@ -147,6 +152,7 @@ class GestorEstado:
     def registrar_error(self, error: str) -> None:
         with self._lock:
             self._estado["conectado"] = False
+            self._estado["enlace_activo"] = False
             self._estado["estado_texto"] = "error"
             self._estado["ultimo_error"] = error
             self._estado["mensaje"] = f"Error de conexión: {error}"

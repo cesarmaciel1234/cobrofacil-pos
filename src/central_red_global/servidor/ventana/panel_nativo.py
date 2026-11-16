@@ -511,12 +511,16 @@ class PanelNativoCRM(QWidget):
         if self._en_proceso:
             return
         est = estado_nube.obtener_estado()
-        activo = est.get("enlace_activo", False)
+        activo = bool(
+            est.get("enlace_activo")
+            or est.get("conectado")
+            or est.get("estado_texto") == "conectado"
+        )
         error = est.get("ultimo_error", "")
         empresa = est.get("empresa", "")
         sucursal = est.get("sucursal", "")
-        ultimo_envio = est.get("ultimo_envio_exitoso")
-        filas = est.get("filas_enviadas", 0)
+        ultimo_envio = est.get("ultimo_envio_exitoso") or est.get("ultimo_envio")
+        filas = est.get("filas_enviadas") or est.get("filas_totales") or 0
 
         # Actualizar Telemetría
         self.lbl_tele_envio.setText(ultimo_envio[-8:] if ultimo_envio else "—")
