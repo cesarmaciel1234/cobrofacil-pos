@@ -25,6 +25,19 @@ from src.utils.paths import get_base_path
 from src.updater.github_release_url import release_zip_url_or_fallback
 REMOTE_VERSION_URL = "https://crm-frigorifico.onrender.com/descarga/version"
 
+
+def get_remote_version_url() -> str:
+    """Resuelve la URL de versión remota respetando crm_url configurado."""
+    try:
+        from src.config import config
+
+        base = str(config.get("crm_url") or "").strip().rstrip("/")
+        if base:
+            return f"{base}/descarga/version"
+    except Exception:
+        pass
+    return REMOTE_VERSION_URL
+
 PRESERVE_PREFIXES = (
     "config.json",
     # Precios/estado TV: fallback si falla la red; la cara web va en tv_cara.bin (sí se pisa).
@@ -478,8 +491,9 @@ def _read_remote_version_from_releases() -> str:
 def read_remote_version() -> str:
     global _last_remote_error
     last_exc: Exception | None = None
+    target_url = get_remote_version_url()
     try:
-        data = _http_get_json(REMOTE_VERSION_URL, timeout=90)
+        data = _http_get_json(target_url, timeout=90)
         ver = str((data or {}).get("app_version", "") or "").strip()
         if ver:
             _last_remote_error = ""

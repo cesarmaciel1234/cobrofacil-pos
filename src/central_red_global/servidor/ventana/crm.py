@@ -78,8 +78,8 @@ class VentanaMiniWebCRM(QDialog):
         super().__init__(parent)
         self.url_web = url_web
         self.setWindowTitle("Cobro Fácil · Enlace Nube & CRM")
-        self.resize(580, 580)
-        self.setMinimumSize(480, 460)
+        self.resize(600, 680)
+        self.setMinimumSize(480, 520)
         self.setStyleSheet(_estilo_ventana_web())
 
         lay = QVBoxLayout(self)

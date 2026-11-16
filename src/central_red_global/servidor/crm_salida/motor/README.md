@@ -19,7 +19,7 @@ Opera en aislamiento absoluto respecto al hilo de ventas y al Servidor MariaDB. 
 * `manifiesto(ruta_db: str) -> str`: Genera el hash global SHA-256 de todas las tablas exportables de la base de datos local.
 * `leer_base(ruta_db: str)`: Generador iterativo que lee tabla por tabla en SQLite `mode=ro`, sanitizando y anulando columnas con nombres o valores sensibles (`password`, `token`, `secret`, `api_key`).
 * `_pedir(abridor, req, timeout, intentos=4)`: Wrapper HTTP con reintentos para soportar los cold starts de Render (errores 502, 503, 504) con backoff exponencial suave.
-* `subir_base(...) -> dict`: Envía tablas particionadas en lotes de 150 filas hacia el endpoint `/api/pos/base/tabla`.
+* `subir_base(...) -> dict`: Al enlazar, manda la venta del día entera y después el resto en lotes de 150 filas hacia `/api/pos/base/tabla`.
 * `resolver_empresa(crm_url, api_key, nombre) -> str`: Convierte el slug/nombre comercial de la empresa en su ID numérico en la nube.
 * `entrar(crm_url, usuario, password) -> tuple[opener, empresa_id]`: Autentica al usuario contra `/auth/login` y entrega la cookie jar de sesión.
 * `probar_conexion(crm_url, usuario, password, api_key) -> tuple[bool, str, str]`: Prueba rápida de conectividad y credenciales utilizada por la mini web.

@@ -21,9 +21,9 @@ EXCLUIR = {
 }
 
 EXCLUIR_EXT = {
-    ".db", ".log", ".pyc", ".spec", ".zip", ".bat",
+    ".db", ".db-shm", ".db-wal", ".log", ".pyc", ".spec", ".zip", ".bat",
     ".iss", ".pdf", ".png", ".jpg", ".ico", ".exe",
-    ".ps1", ".ini",
+    ".ps1", ".ini", ".txt", ".part",
 }
 INCLUIR_JSON = {"version.json"}
 

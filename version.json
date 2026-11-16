@@ -1,7 +1,7 @@
 {
-  "app_version": "v50.53",
+  "app_version": "v50.54",
   "channel": "stable",
-  "build_date": "2026-11-15 20:51:40",
+  "build_date": "2026-11-16 14:55:34",
   "server_host": "cesar",
   "modules": {
     ".gitignore": {
@@ -30,7 +30,7 @@
     },
     "carteleria_datos.sello": {
       "version": "1.0.0",
-      "checksum": "4fbaf0d2a597f8e5f0ac5a09424e8001",
+      "checksum": "0826e6b7a98c889b3afbe1d9ca468843",
       "channel": "stable",
       "size": 19
     },
@@ -94,12 +94,6 @@
       "channel": "stable",
       "size": 2074
     },
-    "github_update_token.txt": {
-      "version": "1.0.0",
-      "checksum": "77d6d112ac45c6ab5ce459fc720f3345",
-      "channel": "stable",
-      "size": 42
-    },
     "github_update_token.txt.example": {
       "version": "1.0.0",
       "checksum": "7c9c0cc94a34aa37bfdeac594f93baca",
@@ -144,9 +138,9 @@
     },
     "modularizacion.md": {
       "version": "1.0.0",
-      "checksum": "418facc67a89d6c4867cfd929d212dfb",
+      "checksum": "1cf906727d1ef1d2bc4eb17fcc435ccd",
       "channel": "stable",
-      "size": 4176
+      "size": 13193
     },
     "old_paso6.py": {
       "version": "1.0.0",
@@ -171,18 +165,6 @@
       "checksum": "164143aa3cd90eeb4fa881db93387e42",
       "channel": "stable",
       "size": 10798
-    },
-    "out.txt": {
-      "version": "1.0.0",
-      "checksum": "32535835df3bfea824b0011e2153719e",
-      "channel": "stable",
-      "size": 1364
-    },
-    "out2.txt": {
-      "version": "1.0.0",
-      "checksum": "091e7495aadee24bfb42080a74c013dd",
-      "channel": "stable",
-      "size": 1364
     },
     "patch.py": {
       "version": "1.0.0",
@@ -702,9 +684,9 @@
     },
     "patch_f9.py": {
       "version": "1.0.0",
-      "checksum": "d1c6cc7f270092534a2e2172c1cce43e",
+      "checksum": "e08652827972745589e57ff93ae12a58",
       "channel": "stable",
-      "size": 712
+      "size": 2260
     },
     "patch_f9_dialogo.py": {
       "version": "1.0.0",
@@ -1014,9 +996,9 @@
     },
     "patch_panel.py": {
       "version": "1.0.0",
-      "checksum": "0805d983569312221c70426bb1c36518",
+      "checksum": "4c0c3ccb1159a8654b17c64477959e9b",
       "channel": "stable",
-      "size": 3779
+      "size": 190
     },
     "patch_panel_error1.py": {
       "version": "1.0.0",
@@ -1068,9 +1050,9 @@
     },
     "patch_paso6.py": {
       "version": "1.0.0",
-      "checksum": "f6d4f112db64968c48bfdf68953d8905",
+      "checksum": "9f26d515c5b24c290e53e6f5f1a4b606",
       "channel": "stable",
-      "size": 490
+      "size": 362
     },
     "patch_paso6_aislamiento.py": {
       "version": "1.0.0",
@@ -1402,24 +1384,6 @@
       "channel": "stable",
       "size": 6692
     },
-    "requirements-pyqt5.txt": {
-      "version": "1.0.0",
-      "checksum": "b18699ed6bcf86e228b051f2abfce4a4",
-      "channel": "stable",
-      "size": 310
-    },
-    "requirements-pyqt6.txt": {
-      "version": "1.0.0",
-      "checksum": "11c74123363a4890a4a63e9dbeb1fead",
-      "channel": "stable",
-      "size": 414
-    },
-    "requirements.txt": {
-      "version": "1.0.0",
-      "checksum": "44e2722e483b9d1a9146213b0de681c7",
-      "channel": "stable",
-      "size": 282
-    },
     "rewrite_nativo.py": {
       "version": "1.0.0",
       "checksum": "b778cf791725644aa9e0cd6f14351270",
@@ -1443,12 +1407,6 @@
       "checksum": "6c2654b245741f5fdefcce2a97e89585",
       "channel": "stable",
       "size": 1270
-    },
-    "run_err.txt": {
-      "version": "1.0.0",
-      "checksum": "025780afaef95348ef241ae5a543b226",
-      "channel": "stable",
-      "size": 8710
     },
     "run_rebuild.py": {
       "version": "1.0.0",
@@ -1486,6 +1444,12 @@
       "channel": "stable",
       "size": 102
     },
+    "test_contabilidad.py": {
+      "version": "1.0.0",
+      "checksum": "5e15d7619fa7c0487f8cad4421678c19",
+      "channel": "stable",
+      "size": 1169
+    },
     "test_db.py": {
       "version": "1.0.0",
       "checksum": "443e37df516daa8cae2ff4e97060c16f",
@@ -1503,12 +1467,6 @@
       "checksum": "992815969a5c0863c4f38179547b4ee9",
       "channel": "stable",
       "size": 200
-    },
-    "test_err.txt": {
-      "version": "1.0.0",
-      "checksum": "402e7a087747cb56c718bde84651f96a",
-      "channel": "stable",
-      "size": 8
     },
     "test_f5.py": {
       "version": "1.0.0",
@@ -1552,11 +1510,17 @@
       "channel": "stable",
       "size": 1183
     },
-    "test_output.txt": {
+    "test_motor.py": {
       "version": "1.0.0",
-      "checksum": "d562bfe4370ef69841ebb2c5ca1ac9fd",
+      "checksum": "6e317334074334f6ecc8574b5e2fb2ea",
       "channel": "stable",
-      "size": 1897
+      "size": 331
+    },
+    "test_motor_detailed.py": {
+      "version": "1.0.0",
+      "checksum": "68a04123eae859e3c6b47f712c892531",
+      "channel": "stable",
+      "size": 339
     },
     "test_p6_enter.py": {
       "version": "1.0.0",
@@ -1594,24 +1558,6 @@
       "channel": "stable",
       "size": 1946
     },
-    "ticket_dump.txt": {
-      "version": "1.0.0",
-      "checksum": "71e254937bc17bd7456732404e750ad2",
-      "channel": "stable",
-      "size": 869
-    },
-    "ticket_out.txt": {
-      "version": "1.0.0",
-      "checksum": "3455aa2ef5eff0e3bf090d0ef5564b07",
-      "channel": "stable",
-      "size": 844
-    },
-    "tmp.txt": {
-      "version": "1.0.0",
-      "checksum": "e8ecdbdcbd3b8563e727e9601928a193",
-      "channel": "stable",
-      "size": 902
-    },
     "update_panel_handoff.py": {
       "version": "1.0.0",
       "checksum": "614d47d655380b9341b041fba91fa71b",
@@ -1644,9 +1590,9 @@
     },
     "version.json": {
       "version": "1.0.0",
-      "checksum": "da2a061464be8082e0dba00e66b1b3f5",
+      "checksum": "6d679186c803601c4e1bbfbad3c60596",
       "channel": "stable",
-      "size": 1264244
+      "size": 1265412
     },
     "_bump_v5019.py": {
       "version": "1.0.0",
@@ -1800,9 +1746,9 @@
     },
     "01_Compiladores_y_Ejecutables/generar_version.py": {
       "version": "1.0.0",
-      "checksum": "b74e1b2fc1cfc84e9fb8afdd2ab9123b",
+      "checksum": "4bf4327e25de41517a45218de3ea1838",
       "channel": "stable",
-      "size": 3884
+      "size": 3923
     },
     "01_Compiladores_y_Ejecutables/package_release_zip.py": {
       "version": "1.0.0",
@@ -2133,12 +2079,6 @@
       "checksum": "e035cea6d3f85ab98638dd3dc0d6c55c",
       "channel": "stable",
       "size": 2653
-    },
-    "backups_manuales/backup_carteleria_full/creador_png/requirements.txt": {
-      "version": "1.0.0",
-      "checksum": "2152934484963ecc8d297639d47bf1ce",
-      "channel": "stable",
-      "size": 15
     },
     "backups_manuales/backup_carteleria_full/creador_png/rutas.py": {
       "version": "1.0.0",
@@ -2679,12 +2619,6 @@
       "checksum": "0041ef1bd19792b0ae6d7c2e27ce7a75",
       "channel": "stable",
       "size": 5760
-    },
-    "backups_manuales/backup_carteleria_full/lanzador_tv/la_cara_web/ui_build.txt": {
-      "version": "1.0.0",
-      "checksum": "962b10e8d925f134a0cb89136a9a1d49",
-      "channel": "stable",
-      "size": 5
     },
     "backups_manuales/backup_carteleria_full/lanzador_tv/la_cara_web/assets/logo_sistema.svg": {
       "version": "1.0.0",
@@ -3628,24 +3562,6 @@
       "channel": "stable",
       "size": 8192
     },
-    "Catalogos/png_productos/morcilla_2.png.part": {
-      "version": "1.0.0",
-      "checksum": "dec7204bd7c7f04205b67c0d4d976d85",
-      "channel": "stable",
-      "size": 1158769
-    },
-    "Catalogos/png_productos/morcilla_5.png.part": {
-      "version": "1.0.0",
-      "checksum": "539d6613f88da59b9d76f8b5d12ed8a4",
-      "channel": "stable",
-      "size": 1136205
-    },
-    "Catalogos/png_productos/pata_y_muslo_2.png.part": {
-      "version": "1.0.0",
-      "checksum": "3f333fe2374c016bc3c0a49edd23b0cb",
-      "channel": "stable",
-      "size": 822623
-    },
     "creador_png_tmp/uploads/00aaf907-cf9e-4f82-8e7e-f419e24043fe.jpeg": {
       "version": "1.0.0",
       "checksum": "774bda75fe53e1c4d88d3d2450d4438e",
@@ -4102,12 +4018,6 @@
       "channel": "stable",
       "size": 1692
     },
-    "scripts/archivo/full_der.txt": {
-      "version": "1.0.0",
-      "checksum": "56647addde13f91c640fcf485a2dfd88",
-      "channel": "stable",
-      "size": 36083
-    },
     "scripts/archivo/make_fluid.py": {
       "version": "1.0.0",
       "checksum": "fbb01d3ddd56b81d61f9f6588f4a1f9d",
@@ -4390,23 +4300,11 @@
       "channel": "stable",
       "size": 362
     },
-    "scripts/pruebas/diffs.txt": {
-      "version": "1.0.0",
-      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
-      "channel": "stable",
-      "size": 0
-    },
     "scripts/pruebas/download_test.py": {
       "version": "1.0.0",
       "checksum": "a2b9eca99ad78ed690d78bed878e8d8f",
       "channel": "stable",
       "size": 626
-    },
-    "scripts/pruebas/error.txt": {
-      "version": "1.0.0",
-      "checksum": "f7456cd0947a9cdf0a9f243954f85b20",
-      "channel": "stable",
-      "size": 1886
     },
     "scripts/pruebas/fetch_runs.py": {
       "version": "1.0.0",
@@ -4677,18 +4575,6 @@
       "checksum": "0a2722abb697492b7284dc61da4cbd96",
       "channel": "stable",
       "size": 854
-    },
-    "scripts/pruebas/pyqt6_audit_final.txt": {
-      "version": "1.0.0",
-      "checksum": "d32ff0e348e81fcaf20ea8a0aa40b64d",
-      "channel": "stable",
-      "size": 1910
-    },
-    "scripts/pruebas/pyqt6_audit_report.txt": {
-      "version": "1.0.0",
-      "checksum": "502b70e105c70ad976f0ef6dc7e3b00e",
-      "channel": "stable",
-      "size": 2022
     },
     "scripts/pruebas/read_css.py": {
       "version": "1.0.0",
@@ -6012,9 +5898,9 @@
     },
     "src/base_de_datos/migrations/migrator.py": {
       "version": "1.0.0",
-      "checksum": "109c885dfdcdbf6e3700e6ee5687b461",
+      "checksum": "45c2fe05519f141c7537b79d961c8d02",
       "channel": "stable",
-      "size": 38783
+      "size": 39012
     },
     "src/base_de_datos/migrations/README.md": {
       "version": "1.0.0",
@@ -7260,9 +7146,9 @@
     },
     "src/cajero/paso6_cobro/paso6_cobro.py": {
       "version": "1.0.0",
-      "checksum": "56cb9d14bc562baa707a8c614e1323f9",
+      "checksum": "67eac62643d28dea0d21476b4c6b46b2",
       "channel": "stable",
-      "size": 111190
+      "size": 113450
     },
     "src/cajero/paso6_cobro/plano.md": {
       "version": "1.0.0",
@@ -7986,21 +7872,21 @@
     },
     "src/cajero/paso6_cobro/qr_en_cobro/panel.py": {
       "version": "1.0.0",
-      "checksum": "d40db9e452d82a60d3685f0b87d13224",
+      "checksum": "111deb1911bbbd797b4a0303196d748b",
       "channel": "stable",
-      "size": 9878
+      "size": 10270
     },
     "src/cajero/paso6_cobro/qr_en_cobro/pedido.py": {
       "version": "1.0.0",
-      "checksum": "2361fc0aaf8887a6e672723fc096d012",
+      "checksum": "ae2429e41ae6a440c4c13be5b2b187fe",
       "channel": "stable",
-      "size": 11386
+      "size": 11989
     },
     "src/cajero/paso6_cobro/qr_en_cobro/README.md": {
       "version": "1.0.0",
-      "checksum": "0fec7f4276e9965d17870bb03a945aaf",
+      "checksum": "82538045a3b7b42ddf1c2d939afb91e4",
       "channel": "stable",
-      "size": 2564
+      "size": 2709
     },
     "src/cajero/paso6_cobro/qr_en_cobro/__init__.py": {
       "version": "1.0.0",
@@ -8770,12 +8656,6 @@
       "channel": "stable",
       "size": 544
     },
-    "src/carteleria/creador_png/requirements.txt": {
-      "version": "1.0.0",
-      "checksum": "2152934484963ecc8d297639d47bf1ce",
-      "channel": "stable",
-      "size": 15
-    },
     "src/carteleria/creador_png/rutas.py": {
       "version": "1.0.0",
       "checksum": "a91ddbad41f838d8ec418cb9521e80ae",
@@ -9495,12 +9375,6 @@
       "checksum": "9987de17ec3800211ba1e3706098bca9",
       "channel": "stable",
       "size": 1404
-    },
-    "src/carteleria/lanzador_tv/la_cara_web/ui_build.txt": {
-      "version": "1.0.0",
-      "checksum": "9d2aacf976f05bee509f9d32c1f0d793",
-      "channel": "stable",
-      "size": 5
     },
     "src/carteleria/lanzador_tv/la_cara_web/assets/logo_sistema.svg": {
       "version": "1.0.0",
@@ -10422,9 +10296,9 @@
     },
     "src/central_red_global/servidor/crm_salida/plano.md": {
       "version": "1.0.0",
-      "checksum": "9c25268260504d9e253b31ebb9dbad72",
+      "checksum": "76ab98bb87090f2f29a2e3e0ccfc9166",
       "channel": "stable",
-      "size": 6891
+      "size": 6918
     },
     "src/central_red_global/servidor/crm_salida/proceso.py": {
       "version": "1.0.0",
@@ -10458,21 +10332,21 @@
     },
     "src/central_red_global/servidor/crm_salida/motor/estado.py": {
       "version": "1.0.0",
-      "checksum": "52403a47d0b48a4aff3ca2a554cfb1cc",
+      "checksum": "0d56af1c0db34f007fe1a8f4933ac23a",
       "channel": "stable",
-      "size": 6128
+      "size": 6428
     },
     "src/central_red_global/servidor/crm_salida/motor/README.md": {
       "version": "1.0.0",
-      "checksum": "2596c2e61f4aa3f985972b4aa26cbdce",
+      "checksum": "4a7e04cd63e1246e384a4a5324cb4443",
       "channel": "stable",
-      "size": 5912
+      "size": 5935
     },
     "src/central_red_global/servidor/crm_salida/motor/subida.py": {
       "version": "1.0.0",
-      "checksum": "2813d1c6b670c7513cd80d51283ed88b",
+      "checksum": "71ebfcb51d194be890a432a9bcbe8a65",
       "channel": "stable",
-      "size": 24889
+      "size": 29625
     },
     "src/central_red_global/servidor/crm_salida/motor/__init__.py": {
       "version": "1.0.0",
@@ -10668,7 +10542,7 @@
     },
     "src/central_red_global/servidor/ventana/crm.py": {
       "version": "1.0.0",
-      "checksum": "c2c7518949708c64755979a1b9230476",
+      "checksum": "a873471a26aa939563d356e32ef5926e",
       "channel": "stable",
       "size": 5943
     },
@@ -10686,9 +10560,9 @@
     },
     "src/central_red_global/servidor/ventana/panel_nativo.py": {
       "version": "1.0.0",
-      "checksum": "0f43a19506e36ff69f8c65da700bc162",
+      "checksum": "9a41a2a8f32694b3422ae1dc94080f77",
       "channel": "stable",
-      "size": 31679
+      "size": 31847
     },
     "src/central_red_global/servidor/ventana/presencia.py": {
       "version": "1.0.0",
@@ -11772,9 +11646,9 @@
     },
     "src/clientes_fiado/oficina/cuenta/cancelacion.py": {
       "version": "1.0.0",
-      "checksum": "700bcd8241fb91fbf26bd859096da18c",
+      "checksum": "0064a13f885bf86eed0c06f155822d68",
       "channel": "stable",
-      "size": 11141
+      "size": 11158
     },
     "src/clientes_fiado/oficina/cuenta/cuadre.py": {
       "version": "1.0.0",
@@ -11790,9 +11664,9 @@
     },
     "src/clientes_fiado/oficina/cuenta/motor.py": {
       "version": "1.0.0",
-      "checksum": "705dd89dd8c0ecedc080adb666f7ec4f",
+      "checksum": "3a8e1892acadb3510100c370557049d1",
       "channel": "stable",
-      "size": 53073
+      "size": 53611
     },
     "src/clientes_fiado/oficina/cuenta/README.md": {
       "version": "1.0.0",
@@ -12948,9 +12822,9 @@
     },
     "src/lanzador/moleculas/updater_badge.py": {
       "version": "1.0.0",
-      "checksum": "9b9d679bc1f7ca62c3aef588d3d24d69",
+      "checksum": "2a5fa6b2a5c810855713a1e60da5bf53",
       "channel": "stable",
-      "size": 16449
+      "size": 17293
     },
     "src/lanzador/moleculas/__init__.py": {
       "version": "1.0.0",
@@ -15108,9 +14982,9 @@
     },
     "src/updater/github_release_url.py": {
       "version": "1.0.0",
-      "checksum": "bbf293cf29730884011c6cc6ffbd6e99",
+      "checksum": "f9867d94ff77f590df242cf182d21883",
       "channel": "stable",
-      "size": 3545
+      "size": 3759
     },
     "src/updater/github_updater.py": {
       "version": "1.0.0",
@@ -15162,9 +15036,9 @@
     },
     "src/updater/cerebro/engine.py": {
       "version": "1.0.0",
-      "checksum": "ab56ab9dea6ba3a74521d062d9b0a2df",
+      "checksum": "d95436af0f320d9a9c0f06ca206d0e1a",
       "channel": "stable",
-      "size": 45725
+      "size": 46133
     },
     "src/updater/cerebro/github_auth.py": {
       "version": "1.0.0",
@@ -15462,9 +15336,9 @@
     },
     "tests/test_cierre_z.html": {
       "version": "1.0.0",
-      "checksum": "eb6639ea5505a0bb155421751b667aae",
+      "checksum": "e6921bbc81f88b9f2c6930fd71c42287",
       "channel": "stable",
-      "size": 2712
+      "size": 2691
     },
     "tests/test_cobranzas_y_fondos.py": {
       "version": "1.0.0",
@@ -15525,6 +15399,12 @@
       "checksum": "a5a1c9e74b406c9965292f095a12fd6d",
       "channel": "stable",
       "size": 2777
+    },
+    "tests/test_crm_salida_orden.py": {
+      "version": "1.0.0",
+      "checksum": "372734d092bc1e55bf72e7374eb11846",
+      "channel": "stable",
+      "size": 2465
     },
     "tests/test_cuentas_multi_token.py": {
       "version": "1.0.0",
@@ -16540,12 +16420,6 @@
       "channel": "stable",
       "size": 82
     },
-    "worker/_internal/click-8.5.0.dist-info/licenses/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "1fa98232fd645608937a0fdc82e999b8",
-      "channel": "stable",
-      "size": 1475
-    },
     "worker/_internal/contourpy/_contourpy.cp311-win_amd64.pyd": {
       "version": "1.0.0",
       "checksum": "e24ce4fdfa2afc88be8086d8868ad8d0",
@@ -16557,12 +16431,6 @@
       "checksum": "b9520752a56a87321b4caf8a6fbd460c",
       "channel": "stable",
       "size": 156400
-    },
-    "worker/_internal/jsonschema-4.26.0.dist-info/entry_points.txt": {
-      "version": "1.0.0",
-      "checksum": "095614c840316fb033b6b246ebc5a437",
-      "channel": "stable",
-      "size": 51
     },
     "worker/_internal/jsonschema-4.26.0.dist-info/INSTALLER": {
       "version": "1.0.0",
@@ -16720,23 +16588,11 @@
       "channel": "stable",
       "size": 1104
     },
-    "worker/_internal/markupsafe-3.0.3.dist-info/top_level.txt": {
-      "version": "1.0.0",
-      "checksum": "5862354c9fbb5b15204672c79808e25c",
-      "channel": "stable",
-      "size": 11
-    },
     "worker/_internal/markupsafe-3.0.3.dist-info/WHEEL": {
       "version": "1.0.0",
       "checksum": "badce22ed40c0e2186778894d8757723",
       "channel": "stable",
       "size": 101
-    },
-    "worker/_internal/markupsafe-3.0.3.dist-info/licenses/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "779964cd6648aa66466fb0d1a9629339",
-      "channel": "stable",
-      "size": 1503
     },
     "worker/_internal/matplotlib/ft2font.cp311-win_amd64.pyd": {
       "version": "1.0.0",
@@ -17121,12 +16977,6 @@
       "checksum": "9cceac6630e6963e1b4bfcd89ce91cb4",
       "channel": "stable",
       "size": 74292
-    },
-    "worker/_internal/matplotlib/mpl-data/fonts/pdfcorefonts/readme.txt": {
-      "version": "1.0.0",
-      "checksum": "db72297ee9cd17475890ba1a20afb604",
-      "channel": "stable",
-      "size": 828
     },
     "worker/_internal/matplotlib/mpl-data/fonts/pdfcorefonts/Symbol.afm": {
       "version": "1.0.0",
@@ -17578,12 +17428,6 @@
       "channel": "stable",
       "size": 3211
     },
-    "worker/_internal/matplotlib/mpl-data/sample_data/README.txt": {
-      "version": "1.0.0",
-      "checksum": "ca2f89000b6012f974aff6e1fec0be98",
-      "channel": "stable",
-      "size": 128
-    },
     "worker/_internal/matplotlib/mpl-data/sample_data/s1045.ima.gz": {
       "version": "1.0.0",
       "checksum": "cc8b5a72c864375ea55d100f93ce2300",
@@ -17956,12 +17800,6 @@
       "channel": "stable",
       "size": 462
     },
-    "worker/_internal/numpy-2.4.6.dist-info/entry_points.txt": {
-      "version": "1.0.0",
-      "checksum": "6f858322c9bc0659f250a01c58792b67",
-      "channel": "stable",
-      "size": 220
-    },
     "worker/_internal/numpy-2.4.6.dist-info/INSTALLER": {
       "version": "1.0.0",
       "checksum": "365c9bfeb7d89244f2ce01c1de44cb85",
@@ -17992,23 +17830,11 @@
       "channel": "stable",
       "size": 85
     },
-    "worker/_internal/numpy-2.4.6.dist-info/licenses/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "2e10a48dc17d8e090dfb37bb3447b747",
-      "channel": "stable",
-      "size": 45831
-    },
     "worker/_internal/numpy-2.4.6.dist-info/licenses/numpy/fft/pocketfft/LICENSE.md": {
       "version": "1.0.0",
       "checksum": "1a61eba96d322b4223b2c757966d11c3",
       "channel": "stable",
       "size": 1523
-    },
-    "worker/_internal/numpy-2.4.6.dist-info/licenses/numpy/linalg/lapack_lite/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "6470fc2a1943f4c9357c9e5904e1de14",
-      "channel": "stable",
-      "size": 2314
     },
     "worker/_internal/numpy-2.4.6.dist-info/licenses/numpy/ma/LICENSE": {
       "version": "1.0.0",
@@ -18058,12 +17884,6 @@
       "channel": "stable",
       "size": 340
     },
-    "worker/_internal/numpy-2.4.6.dist-info/licenses/numpy/_core/include/numpy/libdivide/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "898cbc8eff52a5f3db6d05c6c063931a",
-      "channel": "stable",
-      "size": 1039
-    },
     "worker/_internal/numpy-2.4.6.dist-info/licenses/numpy/_core/src/common/pythoncapi-compat/COPYING": {
       "version": "1.0.0",
       "checksum": "63d6ca1cbf7eb8a0f2fd5fbdeb3ce7bf",
@@ -18075,12 +17895,6 @@
       "checksum": "427301eb5f43dce5a837587b2db4aed2",
       "channel": "stable",
       "size": 21155
-    },
-    "worker/_internal/numpy-2.4.6.dist-info/licenses/numpy/_core/src/multiarray/dragon4_LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "cc036684440cfc85989d9eb2ce62a83e",
-      "channel": "stable",
-      "size": 1441
     },
     "worker/_internal/numpy-2.4.6.dist-info/licenses/numpy/_core/src/npysort/x86-simd-sort/LICENSE.md": {
       "version": "1.0.0",
@@ -18117,12 +17931,6 @@
       "checksum": "5cadd9fa7dfbc7c8109ceece841b82bb",
       "channel": "stable",
       "size": 4730
-    },
-    "worker/_internal/onnxruntime/ThirdPartyNotices.txt": {
-      "version": "1.0.0",
-      "checksum": "f9c610e3eb0eb76f7d1a0010a1099c71",
-      "channel": "stable",
-      "size": 343249
     },
     "worker/_internal/onnxruntime/__init__.py": {
       "version": "1.0.0",
@@ -20014,12 +19822,6 @@
       "channel": "stable",
       "size": 490
     },
-    "worker/_internal/onnxruntime-1.29.0.dist-info/entry_points.txt": {
-      "version": "1.0.0",
-      "checksum": "de46a49fec2a4048b41e5093d4aa90ba",
-      "channel": "stable",
-      "size": 77
-    },
     "worker/_internal/onnxruntime-1.29.0.dist-info/INSTALLER": {
       "version": "1.0.0",
       "checksum": "365c9bfeb7d89244f2ce01c1de44cb85",
@@ -20043,12 +19845,6 @@
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
       "size": 0
-    },
-    "worker/_internal/onnxruntime-1.29.0.dist-info/top_level.txt": {
-      "version": "1.0.0",
-      "checksum": "09a2d6936458d2ad745286a887093fb3",
-      "channel": "stable",
-      "size": 12
     },
     "worker/_internal/onnxruntime-1.29.0.dist-info/WHEEL": {
       "version": "1.0.0",
@@ -20224,12 +20020,6 @@
       "channel": "stable",
       "size": 0
     },
-    "worker/_internal/pooch-1.9.0.dist-info/top_level.txt": {
-      "version": "1.0.0",
-      "checksum": "3643aa112c1ac04591e5d481a24fbe47",
-      "channel": "stable",
-      "size": 6
-    },
     "worker/_internal/pooch-1.9.0.dist-info/WHEEL": {
       "version": "1.0.0",
       "checksum": "070081f983e4c128d96db8334f23ea16",
@@ -20241,12 +20031,6 @@
       "checksum": "63243f5c373e20059abd4ba0496256b1",
       "channel": "stable",
       "size": 3225
-    },
-    "worker/_internal/pooch-1.9.0.dist-info/licenses/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "34edf66cdaea1acc8b8a430af829c7dc",
-      "channel": "stable",
-      "size": 1496
     },
     "worker/_internal/PyQt6/QtCore.pyd": {
       "version": "1.0.0",
@@ -21244,12 +21028,6 @@
       "channel": "stable",
       "size": 2844
     },
-    "worker/_internal/rembg-2.0.81.dist-info/entry_points.txt": {
-      "version": "1.0.0",
-      "checksum": "94a552b99bfb2f83ef5bdc274f91706e",
-      "channel": "stable",
-      "size": 40
-    },
     "worker/_internal/rembg-2.0.81.dist-info/INSTALLER": {
       "version": "1.0.0",
       "checksum": "365c9bfeb7d89244f2ce01c1de44cb85",
@@ -21280,18 +21058,6 @@
       "channel": "stable",
       "size": 88
     },
-    "worker/_internal/rembg-2.0.81.dist-info/licenses/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "2c37afc1b711a53bd432d04ef2177fe9",
-      "channel": "stable",
-      "size": 1069
-    },
-    "worker/_internal/rembg-2.0.83.dist-info/entry_points.txt": {
-      "version": "1.0.0",
-      "checksum": "94a552b99bfb2f83ef5bdc274f91706e",
-      "channel": "stable",
-      "size": 40
-    },
     "worker/_internal/rembg-2.0.83.dist-info/INSTALLER": {
       "version": "1.0.0",
       "checksum": "365c9bfeb7d89244f2ce01c1de44cb85",
@@ -21321,12 +21087,6 @@
       "checksum": "3fbb4a31b05e35c678b1508f98b46673",
       "channel": "stable",
       "size": 88
-    },
-    "worker/_internal/rembg-2.0.83.dist-info/licenses/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "2c37afc1b711a53bd432d04ef2177fe9",
-      "channel": "stable",
-      "size": 1069
     },
     "worker/_internal/rpds/rpds.cp311-win_amd64.pyd": {
       "version": "1.0.0",
@@ -21886,12 +21646,6 @@
       "channel": "stable",
       "size": 20260864
     },
-    "worker/_internal/setuptools-65.5.0.dist-info/entry_points.txt": {
-      "version": "1.0.0",
-      "checksum": "d3262b65db35bffaac248075345a266c",
-      "channel": "stable",
-      "size": 2740
-    },
     "worker/_internal/setuptools-65.5.0.dist-info/INSTALLER": {
       "version": "1.0.0",
       "checksum": "365c9bfeb7d89244f2ce01c1de44cb85",
@@ -21921,12 +21675,6 @@
       "checksum": "d41d8cd98f00b204e9800998ecf8427e",
       "channel": "stable",
       "size": 0
-    },
-    "worker/_internal/setuptools-65.5.0.dist-info/top_level.txt": {
-      "version": "1.0.0",
-      "checksum": "789a691c859dea4bb010d18728bad148",
-      "channel": "stable",
-      "size": 41
     },
     "worker/_internal/setuptools-65.5.0.dist-info/WHEEL": {
       "version": "1.0.0",
@@ -21987,12 +21735,6 @@
       "checksum": "0d2be1b22b511b34e0c040d53a3ddf9b",
       "channel": "stable",
       "size": 147968
-    },
-    "worker/_internal/skimage/feature/orb_descriptor_positions.txt": {
-      "version": "1.0.0",
-      "checksum": "a7a243597f34b6b233371ac4feec04d8",
-      "channel": "stable",
-      "size": 3096
     },
     "worker/_internal/skimage/feature/_canny_cy.cp311-win_amd64.pyd": {
       "version": "1.0.0",
@@ -22276,12 +22018,6 @@
       "channel": "stable",
       "size": 101888
     },
-    "worker/_internal/tqdm-4.70.0.dist-info/entry_points.txt": {
-      "version": "1.0.0",
-      "checksum": "c6769783826aecd0242b7cfa5db3a780",
-      "channel": "stable",
-      "size": 39
-    },
     "worker/_internal/tqdm-4.70.0.dist-info/INSTALLER": {
       "version": "1.0.0",
       "checksum": "365c9bfeb7d89244f2ce01c1de44cb85",
@@ -22299,12 +22035,6 @@
       "checksum": "316941f92cf1a0d182426e91f95d8246",
       "channel": "stable",
       "size": 4551
-    },
-    "worker/_internal/tqdm-4.70.0.dist-info/top_level.txt": {
-      "version": "1.0.0",
-      "checksum": "0e9e1d61c217a23419ddc4bf5bf70525",
-      "channel": "stable",
-      "size": 5
     },
     "worker/_internal/tqdm-4.70.0.dist-info/WHEEL": {
       "version": "1.0.0",
@@ -22846,12 +22576,6 @@
       "channel": "stable",
       "size": 4
     },
-    "_internal/blinker-1.9.0.dist-info/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "42cd19c88fc13d1307a4efd64ee90e4e",
-      "channel": "stable",
-      "size": 1054
-    },
     "_internal/blinker-1.9.0.dist-info/METADATA": {
       "version": "1.0.0",
       "checksum": "4b009dc59937ea7f9eb4ea261c70e1aa",
@@ -22917,12 +22641,6 @@
       "checksum": "eca1d2e32987c5c9fd85f21a0c92d672",
       "channel": "stable",
       "size": 82
-    },
-    "_internal/click-8.5.0.dist-info/licenses/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "1fa98232fd645608937a0fdc82e999b8",
-      "channel": "stable",
-      "size": 1475
     },
     "_internal/dateutil/zoneinfo/dateutil-zoneinfo.tar.gz": {
       "version": "1.0.0",
@@ -23086,12 +22804,6 @@
       "channel": "stable",
       "size": 30371
     },
-    "_internal/flask-3.1.3.dist-info/entry_points.txt": {
-      "version": "1.0.0",
-      "checksum": "8feddca68819b423f57dfb59ce8ee3bd",
-      "channel": "stable",
-      "size": 40
-    },
     "_internal/flask-3.1.3.dist-info/INSTALLER": {
       "version": "1.0.0",
       "checksum": "365c9bfeb7d89244f2ce01c1de44cb85",
@@ -23122,23 +22834,11 @@
       "channel": "stable",
       "size": 82
     },
-    "_internal/flask-3.1.3.dist-info/licenses/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "ffeffa59c90c9c4a033c7574f8f3fb75",
-      "channel": "stable",
-      "size": 1475
-    },
     "_internal/itsdangerous-2.2.0.dist-info/INSTALLER": {
       "version": "1.0.0",
       "checksum": "365c9bfeb7d89244f2ce01c1de44cb85",
       "channel": "stable",
       "size": 4
-    },
-    "_internal/itsdangerous-2.2.0.dist-info/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "4cda9a0ebd516714f360b0e9418cfb37",
-      "channel": "stable",
-      "size": 1475
     },
     "_internal/itsdangerous-2.2.0.dist-info/METADATA": {
       "version": "1.0.0",
@@ -23157,12 +22857,6 @@
       "checksum": "24019423ea7c0c2df41c8272a3791e7b",
       "channel": "stable",
       "size": 81
-    },
-    "_internal/jinja2-3.1.6.dist-info/entry_points.txt": {
-      "version": "1.0.0",
-      "checksum": "27ee54d73799b15fbbfc380f02f07957",
-      "channel": "stable",
-      "size": 58
     },
     "_internal/jinja2-3.1.6.dist-info/INSTALLER": {
       "version": "1.0.0",
@@ -23188,12 +22882,6 @@
       "channel": "stable",
       "size": 82
     },
-    "_internal/jinja2-3.1.6.dist-info/licenses/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "5dc88300786f1c214c1e9827a5229462",
-      "channel": "stable",
-      "size": 1475
-    },
     "_internal/markupsafe/_speedups.cp311-win_amd64.pyd": {
       "version": "1.0.0",
       "checksum": "d1db5c2bf3e90b416bc09afa0f3bed1f",
@@ -23218,23 +22906,11 @@
       "channel": "stable",
       "size": 1104
     },
-    "_internal/markupsafe-3.0.3.dist-info/top_level.txt": {
-      "version": "1.0.0",
-      "checksum": "5862354c9fbb5b15204672c79808e25c",
-      "channel": "stable",
-      "size": 11
-    },
     "_internal/markupsafe-3.0.3.dist-info/WHEEL": {
       "version": "1.0.0",
       "checksum": "badce22ed40c0e2186778894d8757723",
       "channel": "stable",
       "size": 101
-    },
-    "_internal/markupsafe-3.0.3.dist-info/licenses/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "779964cd6648aa66466fb0d1a9629339",
-      "channel": "stable",
-      "size": 1503
     },
     "_internal/numpy/fft/_pocketfft_umath.cp311-win_amd64.pyd": {
       "version": "1.0.0",
@@ -23320,12 +22996,6 @@
       "channel": "stable",
       "size": 462
     },
-    "_internal/numpy-2.4.6.dist-info/entry_points.txt": {
-      "version": "1.0.0",
-      "checksum": "6f858322c9bc0659f250a01c58792b67",
-      "channel": "stable",
-      "size": 220
-    },
     "_internal/numpy-2.4.6.dist-info/INSTALLER": {
       "version": "1.0.0",
       "checksum": "365c9bfeb7d89244f2ce01c1de44cb85",
@@ -23356,23 +23026,11 @@
       "channel": "stable",
       "size": 85
     },
-    "_internal/numpy-2.4.6.dist-info/licenses/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "2e10a48dc17d8e090dfb37bb3447b747",
-      "channel": "stable",
-      "size": 45831
-    },
     "_internal/numpy-2.4.6.dist-info/licenses/numpy/fft/pocketfft/LICENSE.md": {
       "version": "1.0.0",
       "checksum": "1a61eba96d322b4223b2c757966d11c3",
       "channel": "stable",
       "size": 1523
-    },
-    "_internal/numpy-2.4.6.dist-info/licenses/numpy/linalg/lapack_lite/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "6470fc2a1943f4c9357c9e5904e1de14",
-      "channel": "stable",
-      "size": 2314
     },
     "_internal/numpy-2.4.6.dist-info/licenses/numpy/ma/LICENSE": {
       "version": "1.0.0",
@@ -23422,12 +23080,6 @@
       "channel": "stable",
       "size": 340
     },
-    "_internal/numpy-2.4.6.dist-info/licenses/numpy/_core/include/numpy/libdivide/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "898cbc8eff52a5f3db6d05c6c063931a",
-      "channel": "stable",
-      "size": 1039
-    },
     "_internal/numpy-2.4.6.dist-info/licenses/numpy/_core/src/common/pythoncapi-compat/COPYING": {
       "version": "1.0.0",
       "checksum": "63d6ca1cbf7eb8a0f2fd5fbdeb3ce7bf",
@@ -23439,12 +23091,6 @@
       "checksum": "427301eb5f43dce5a837587b2db4aed2",
       "channel": "stable",
       "size": 21155
-    },
-    "_internal/numpy-2.4.6.dist-info/licenses/numpy/_core/src/multiarray/dragon4_LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "cc036684440cfc85989d9eb2ce62a83e",
-      "channel": "stable",
-      "size": 1441
     },
     "_internal/numpy-2.4.6.dist-info/licenses/numpy/_core/src/npysort/x86-simd-sort/LICENSE.md": {
       "version": "1.0.0",
@@ -32277,12 +31923,6 @@
       "checksum": "eca1d2e32987c5c9fd85f21a0c92d672",
       "channel": "stable",
       "size": 82
-    },
-    "_internal/werkzeug-3.1.8.dist-info/licenses/LICENSE.txt": {
-      "version": "1.0.0",
-      "checksum": "5dc88300786f1c214c1e9827a5229462",
-      "channel": "stable",
-      "size": 1475
     },
     "_internal/win32/win32api.pyd": {
       "version": "1.0.0",

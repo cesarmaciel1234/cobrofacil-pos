@@ -738,28 +738,24 @@ class MigratorMixin:
             return
         if getattr(self, "_forced_local_offline", False):
             return
-        test_conn = None
+        conn = None
         try:
-            test_conn = self.get_connection()
-            if isinstance(test_conn, sqlite3.Connection):
+            conn = self.get_connection(caer_si_maestra_caida=False)
+            if not conn or isinstance(conn, sqlite3.Connection):
                 return
-        except Exception:
-            return
-        finally:
-            if test_conn:
-                try:
-                    test_conn.close()
-                except Exception:
-                    pass
-        try:
-            tipo = ""
-            rows = self.execute_query(
+            cursor = conn.cursor()
+            cursor.execute(
                 "SELECT DATA_TYPE FROM information_schema.COLUMNS "
-                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = %s",
                 ("productos", "id"),
             )
-            if rows:
-                tipo = str(rows[0].get("DATA_TYPE") or rows[0].get("data_type") or "").lower()
+            row = cursor.fetchone()
+            tipo = ""
+            if row:
+                if isinstance(row, dict):
+                    tipo = str(row.get("DATA_TYPE") or row.get("data_type") or "").lower()
+                else:
+                    tipo = str(row[0] or "").lower()
             if tipo and tipo != "bigint":
                 self._mariadb_ddl(
                     "ALTER TABLE productos MODIFY COLUMN id BIGINT AUTO_INCREMENT",
@@ -767,16 +763,18 @@ class MigratorMixin:
                 )
                 logger.info("productos.id pasado a BIGINT.")
 
-            cs = ""
-            rows = self.execute_query(
+            cursor.execute(
                 "SELECT CHARACTER_SET_NAME FROM information_schema.COLUMNS "
-                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = %s",
                 ("detalles_ventas", "nombre_producto"),
             )
-            if rows:
-                cs = str(
-                    rows[0].get("CHARACTER_SET_NAME") or rows[0].get("character_set_name") or ""
-                ).lower()
+            row = cursor.fetchone()
+            cs = ""
+            if row:
+                if isinstance(row, dict):
+                    cs = str(row.get("CHARACTER_SET_NAME") or row.get("character_set_name") or "").lower()
+                else:
+                    cs = str(row[0] or "").lower()
             if cs and cs not in ("utf8mb4",):
                 self._mariadb_ddl(
                     "ALTER TABLE detalles_ventas "
@@ -787,6 +785,12 @@ class MigratorMixin:
                 logger.info("detalles_ventas.nombre_producto en utf8mb4.")
         except Exception as e:
             logger.error(f"Error en _ensure_table_columns_and_autoincrement: {e}")
+        finally:
+            if conn:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
     def _mariadb_ddl(self, sql: str, timeout: int = 120):
         """DDL con timeout largo (el IO de 3s corta un ALTER de productos)."""

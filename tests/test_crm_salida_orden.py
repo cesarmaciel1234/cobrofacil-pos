@@ -47,6 +47,25 @@ def test_la_semana_nueva_sale_antes_que_la_vieja():
     assert ids == [2, 3, 1]
 
 
+def test_el_dia_mas_nuevo_sale_entero():
+    columnas = ["id", "fecha", "total"]
+    filas = [[i, "2026-11-14 10:00:00", 1] for i in range(151)]
+    filas.append([999, "2026-11-02 10:00:00", 1])
+    lotes = _bloques(columnas, filas)
+    assert len(lotes[0]) == 151
+    assert lotes[1][0][0] == 999
+
+
+def test_los_renglones_del_dia_salen_juntos():
+    columnas = ["id", "id_venta", "nombre"]
+    filas = [[1, 1, "a"], [2, 1, "b"], [3, 2, "c"]]
+    semanas = {"1": "2026-11-09", "2": "2026-11-02"}
+    dias = {"1": "2026-11-14", "2": "2026-11-02"}
+    lotes = _bloques(columnas, filas, semanas, dias)
+    assert [fila[0] for fila in lotes[0]] == [1, 2]
+    assert lotes[1][0][0] == 3
+
+
 def test_los_renglones_siguen_la_semana_del_ticket():
     columnas = ["id", "id_venta", "nombre"]
     filas = [

@@ -47,6 +47,18 @@ def _cuenta_qr(token):
     return "", ""
 
 
+def borrar_orden_pos(token, user_id=None, pos=None):
+    """Cancela o limpia cualquier orden activa que haya quedado colgada en el POS de Mercado Pago."""
+    try:
+        if not user_id or not pos:
+            user_id, pos = _cuenta_qr(token)
+        if user_id and pos:
+            url = url_orden_pos(user_id, pos)
+            MPApiClient.delete(url, token, timeout=2.5)
+    except Exception:
+        pass
+
+
 def _png_qr(texto):
     codigo = qrcode.QRCode(
         version=None,
@@ -77,8 +89,12 @@ def pedir_qr_pos(monto, title="Compra en Punto de Venta", description="Cobro de 
     if not user_id or not pos:
         return {"ok": False, "motivo": "sin_config"}
 
+    # Limpiar cualquier orden previa o colgada en el POS antes de crear la nueva
+    borrar_orden_pos(token, user_id, pos)
+
     ref = str(uuid.uuid4())
     url = url_crear_qr(user_id, pos)
+    url_borrar = url_orden_pos(user_id, pos)
     payload = {
         "external_reference": ref,
         "title": title,
@@ -107,7 +123,7 @@ def pedir_qr_pos(monto, title="Compra en Punto de Venta", description="Cobro de 
             except Exception:
                 qr_data = ""
             if qr_data:
-                borrar_url = url
+                borrar_url = url_borrar
     except Exception:
         resp = None
     if not qr_data:

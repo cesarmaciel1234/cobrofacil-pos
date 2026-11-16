@@ -122,6 +122,16 @@ class Paso6Cobro(QDialog):
         if hasattr(self, "panel_mixto"):
             self.panel_mixto.vaciar()
             self.panel_mixto.ocultar()
+        if hasattr(self, "panel_qr"):
+            try:
+                self.panel_qr.ocultar()
+            except Exception:
+                pass
+        if hasattr(self, "panel_tarjeta"):
+            try:
+                self.panel_tarjeta.ocultar()
+            except Exception:
+                pass
         if hasattr(self, "panel_redondeo_recargo"):
             self.panel_redondeo_recargo.resetear_pesos()
             self.txt_desc.clear()
@@ -1100,17 +1110,20 @@ class Paso6Cobro(QDialog):
 
     def _validar_pago(self):
         """ Centraliza la validación para evitar redundancias y errores de arqueo. """
-        p1_t = str(parse_float_regional(self.txt_pago.text()))
-        p2_t = str(parse_float_regional(self.txt_otro.text()))
+        raw_p1 = self.txt_pago.text().strip()
+        raw_p2 = self.txt_otro.text().strip()
+
         if self.current_metodo in ("Fiado", "Clientes", "MasCredito"):
             p1_t = f"{float(self.total_final or 0):.2f}"
-
-        if not p1_t:
+            self.aviso_monto.hide()
+        elif not raw_p1:
             if self.current_metodo == "Mixto":
                 p1_t = "0"
+                self.aviso_monto.hide()
             elif self.current_metodo in ("Tarjeta", "Transferencia", "QR"):
                 self.txt_pago.setText(self._monto(self.total_final))
                 p1_t = f"{self.total_final:.2f}"
+                self.aviso_monto.hide()
             else:
                 self._avisar("Debe ingresar con cuánto pagó.")
                 self.txt_pago.setStyleSheet(
@@ -1121,7 +1134,31 @@ class Paso6Cobro(QDialog):
                 self.txt_pago.setFocus()
                 return None
         else:
+            val_p1 = parse_float_regional(raw_p1)
+            raw_limpio = raw_p1.replace('$', '').replace(',', '').replace('.', '').strip()
+            if val_p1 == 0.0 and raw_limpio not in ("0", "00", "000"):
+                self._avisar("El monto ingresado no es válido.")
+                self.txt_pago.setStyleSheet(
+                    "font-size: 40px; font-weight: 900; border-radius: 12px; "
+                    "border: 3px solid #F59E0B; color: #0F172A; background: #FFFBEB;"
+                )
+                self._txt_pago_con_alerta = True
+                self.txt_pago.setFocus()
+                return None
+            if self.current_metodo == "Efectivo" and val_p1 <= 0.0 and self.total_final > 0:
+                self._avisar("Debe ingresar con cuánto pagó.")
+                self.txt_pago.setStyleSheet(
+                    "font-size: 40px; font-weight: 900; border-radius: 12px; "
+                    "border: 3px solid #F59E0B; color: #0F172A; background: #FFFBEB;"
+                )
+                self._txt_pago_con_alerta = True
+                self.txt_pago.setFocus()
+                return None
+            p1_t = f"{val_p1:.2f}"
             self.aviso_monto.hide()
+
+        p2_val = parse_float_regional(raw_p2)
+        p2_t = f"{p2_val:.2f}"
 
         if self.current_metodo in ("Fiado", "Clientes", "MasCredito"):
             from src.clientes_fiado.cerebro.cerebro import cerebro
@@ -1172,22 +1209,21 @@ class Paso6Cobro(QDialog):
         )
 
         if p1 is None and p2 is None:
-            if self.current_metodo != "Mixto" and not p1_t.strip().replace('.', '', 1).isdigit():
-                self._avisar("El monto ingresado no es válido.")
-            else:
-                # Si falta dinero y no es mixto, ofrecer pasarse a Mixto
-                if self.current_metodo == "Mixto":
-                    return None
-                if self.current_metodo in ("Fiado", "Clientes", "MasCredito"):
-                    self._avisar("No se pudo cargar el total a la cuenta.")
-                    return None
-                try:
-                    p1_val = float(p1_t) if p1_t else 0.0
-                except ValueError:
-                    p1_val = 0.0
+            if self.current_metodo == "Mixto":
+                return None
+            if self.current_metodo in ("Fiado", "Clientes", "MasCredito"):
+                self._avisar("No se pudo cargar el total a la cuenta.")
+                return None
+            try:
+                p1_val = float(p1_t) if p1_t else 0.0
+            except ValueError:
+                p1_val = 0.0
+            if p1_val > 0.0 and p1_val < self.total_final:
                 self.set_metodo("Mixto")
                 self.panel_mixto.txt_efectivo.setText(f"{p1_val:.2f}")
                 self.panel_mixto.txt_efectivo.setFocus()
+            else:
+                self._avisar("El monto ingresado no es suficiente.")
             return None
 
         return (p1, p2)
@@ -1524,10 +1560,23 @@ class Paso6Cobro(QDialog):
     def reject(self):
         try:
             self.timer_mp.stop()
+            self.timer_spinner.stop()
         except Exception:
             pass
         if getattr(self, "_point_en_curso", False):
             self.espera_point.soltar()
+        if hasattr(self, "panel_qr"):
+            try:
+                self.panel_qr.ocultar()
+            except Exception:
+                pass
+        if hasattr(self, "panel_tarjeta"):
+            try:
+                self.panel_tarjeta.ocultar()
+            except Exception:
+                pass
+        self._ticket_al_pagar = None
+        self._procesando_pago = False
         try:
             from src.notificaciones.motor.estado import publicar
             publicar("cobro_cancelado", "⛔ COBRO CANCELADO", segundos=10)
@@ -1805,6 +1854,16 @@ class Paso6Cobro(QDialog):
             self.timer_spinner.stop()
         except Exception:
             pass
+        if hasattr(self, "panel_qr"):
+            try:
+                self.panel_qr.ocultar()
+            except Exception:
+                pass
+        if hasattr(self, "panel_tarjeta"):
+            try:
+                self.panel_tarjeta.ocultar()
+            except Exception:
+                pass
         if hasattr(self, "aviso_toast"):
             self.aviso_toast.cerrar()
         if self.current_metodo == "Mixto" and hasattr(self, "panel_mixto"):

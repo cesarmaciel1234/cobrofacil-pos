@@ -144,7 +144,12 @@ def fecha_activacion_cursor(cursor, ahora=None, crear=False):
         return valor
     if not crear:
         raise RuntimeError("Falta la fecha de activación del interés por ticket")
-    valor = (ahora or datetime.now()).strftime("%Y-%m-%d %H:%M:%S")
+    if isinstance(ahora, datetime):
+        valor = ahora.strftime("%Y-%m-%d %H:%M:%S")
+    elif ahora:
+        valor = str(ahora)
+    else:
+        valor = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cursor.execute(
         "INSERT INTO configuracion (clave, valor) VALUES (?, ?)",
         (INICIO_ACTIVACION, valor),
@@ -154,18 +159,20 @@ def fecha_activacion_cursor(cursor, ahora=None, crear=False):
 
 def fecha_db_cursor(cursor):
     try:
-        cursor.execute("SELECT CURRENT_TIMESTAMP")
+        is_mariadb = type(cursor).__name__ == "MariaDBCursorWrapper"
+        sql = "SELECT NOW() AS fecha_db" if is_mariadb else "SELECT datetime('now', 'localtime') AS fecha_db"
+        cursor.execute(sql)
         fila = cursor.fetchone()
-        valor = _celda(fila, "CURRENT_TIMESTAMP", 0)
-        if not valor and isinstance(fila, dict):
-            for k in ("current_timestamp", "CURRENT_TIMESTAMP()", "current_timestamp()", "NOW()", "now()"):
-                if k in fila:
-                    valor = fila[k]
-                    break
-            if not valor and fila:
-                valor = next(iter(fila.values()), None)
-        if valor:
-            return valor
+        if fila:
+            if isinstance(fila, dict):
+                valor = fila.get("fecha_db") or next(iter(fila.values()), None)
+            else:
+                try:
+                    valor = fila[0]
+                except Exception:
+                    valor = None
+            if valor:
+                return str(valor)
     except Exception:
         pass
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -198,15 +205,24 @@ def fecha_activacion_db(db=None):
 
 def fecha_db(db=None):
     db = db or db_manager
-    filas = db.execute_query("SELECT CURRENT_TIMESTAMP") or []
-    if not filas:
-        error = str(getattr(db, "last_error", "") or "")
-        detalle = f": {error}" if error else ""
-        raise RuntimeError("No se pudo leer la hora de la base de datos" + detalle)
-    valor = _celda(filas[0], "CURRENT_TIMESTAMP", 0)
-    if not valor:
-        raise RuntimeError("La hora de la base de datos está vacía")
-    return valor
+    try:
+        is_mariadb = getattr(db, "db_engine_type", "sqlite") == "mariadb"
+        sql = "SELECT NOW() AS fecha_db" if is_mariadb else "SELECT datetime('now', 'localtime') AS fecha_db"
+        filas = db.execute_query(sql) or []
+        if filas:
+            fila = filas[0]
+            if isinstance(fila, dict):
+                valor = fila.get("fecha_db") or next(iter(fila.values()), None)
+            else:
+                try:
+                    valor = fila[0]
+                except Exception:
+                    valor = None
+            if valor:
+                return str(valor)
+    except Exception:
+        pass
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 class _DbWrapper:
@@ -633,10 +649,11 @@ class MotorCuenta:
                 )
                 cursor.execute(
                     "INSERT INTO cuenta_corriente "
-                    "(cliente_id, tipo, monto, saldo_resultante, descripcion) "
-                    "VALUES (?, 'CARGO', ?, ?, ?)",
+                    "(cliente_id, fecha, tipo, monto, saldo_resultante, descripcion) "
+                    "VALUES (?, ?, 'CARGO', ?, ?, ?)",
                     (
                         cliente_id,
+                        ahora,
                         monto_interes,
                         saldo_antes_abono,
                         descripcion_interes_cargo,
@@ -669,16 +686,16 @@ class MotorCuenta:
             try:
                 cursor.execute(
                     "INSERT INTO cuenta_corriente "
-                    "(cliente_id, tipo, monto, saldo_resultante, descripcion, medio_pago, perfil, registrado_por) "
-                    "VALUES (?, 'ABONO', ?, ?, ?, ?, ?, ?)",
-                    (cliente_id, monto, nuevo_saldo, descripcion, medio or None, perfil or None, quien or None),
+                    "(cliente_id, fecha, tipo, monto, saldo_resultante, descripcion, medio_pago, perfil, registrado_por) "
+                    "VALUES (?, ?, 'ABONO', ?, ?, ?, ?, ?, ?)",
+                    (cliente_id, ahora, monto, nuevo_saldo, descripcion, medio or None, perfil or None, quien or None),
                 )
             except Exception:
                 cursor.execute("ROLLBACK TO SAVEPOINT abono_linea")
                 cursor.execute(
-                    "INSERT INTO cuenta_corriente (cliente_id, tipo, monto, saldo_resultante, descripcion) "
-                    "VALUES (?, 'ABONO', ?, ?, ?)",
-                    (cliente_id, monto, nuevo_saldo, descripcion),
+                    "INSERT INTO cuenta_corriente (cliente_id, fecha, tipo, monto, saldo_resultante, descripcion) "
+                    "VALUES (?, ?, 'ABONO', ?, ?, ?)",
+                    (cliente_id, ahora, monto, nuevo_saldo, descripcion),
                 )
             cobro_id = _id_insertado(cursor)
             movimiento_en(
@@ -1034,10 +1051,10 @@ class MotorCuenta:
             except (TypeError, ValueError):
                 deuda_actual = 0.0
             nombre = ficha.get("nombre") or _celda(cliente, "nombre", 1) or ""
+            ahora = fecha_db_cursor(cursor)
             monto_anulacion = monto
             nota_reverso = ""
             if venta_id and not ya_anulado:
-                ahora = fecha_db_cursor(cursor)
                 movimientos = movimientos_cursor(cursor, cliente_id)
                 activacion = fecha_activacion_cursor(cursor, ahora=ahora, crear=True)
                 proyeccion = proyectar_interes(movimientos, activacion, ahora=ahora)
@@ -1069,9 +1086,9 @@ class MotorCuenta:
                     nota = f"Borrado cargo #{movimiento_id}"
                 cursor.execute(
                     "INSERT INTO cuenta_corriente "
-                    "(cliente_id, tipo, monto, saldo_resultante, descripcion, venta_id) "
-                    "VALUES (?, 'ANULACION', ?, ?, ?, ?)",
-                    (cliente_id, monto_anulacion, nuevo_saldo, nota, venta_id),
+                    "(cliente_id, fecha, tipo, monto, saldo_resultante, descripcion, venta_id) "
+                    "VALUES (?, ?, 'ANULACION', ?, ?, ?, ?)",
+                    (cliente_id, ahora, monto_anulacion, nuevo_saldo, nota, venta_id),
                 )
                 movimiento_en(
                     cursor, "ANULACION", cliente_id, monto_anulacion, nota,

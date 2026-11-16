@@ -82,7 +82,7 @@ Servidor de Tienda (bandeja.py / headless.py)
    │       │       ├── Lee punpro.db / espejo_tienda.db (SQLite mode=ro estricto)
    │       │       ├── Sanitiza claves secretas (None)
    │       │       ├── Manifiesto SHA-256 (omite envío si la base no cambió)
-   │       │       ├── HTTP POST -> Render en lotes de 150 filas
+   │       │       ├── HTTP POST -> el día de venta sale entero; el resto, en lotes de 150
    │       │       └── Actualiza estado_nube (exito o error)
    │       │
    │       └──> bajada.py (recepción de datos de la nube)

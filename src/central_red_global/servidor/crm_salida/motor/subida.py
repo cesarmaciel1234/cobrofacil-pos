@@ -5,7 +5,7 @@ Aislado y desacoplado:
 - No escribe en la caja ni en MariaDB.
 - Filtra claves y secretos antes de enviar a la nube.
 - Maneja cold start de Render (reintentos 502/503/504).
-- La semana más nueva sale primero. Cada semana viaja de a 150 filas.
+- Al enlazar, la venta del día sale entera en el primer envío. El resto sigue por semanas, de a 150 filas.
 """
 
 from __future__ import annotations
@@ -55,6 +55,17 @@ def _indice_fecha(columnas) -> int | None:
         if nombre in bajos:
             return bajos.index(nombre)
     return None
+
+
+def _dia(valor) -> str:
+    texto = str(valor or "").strip()[:10]
+    if len(texto) != 10 or texto[4] != "-" or texto[7] != "-":
+        return ""
+    try:
+        date.fromisoformat(texto)
+    except ValueError:
+        return ""
+    return texto
 
 
 def _lunes(valor) -> str:
@@ -108,9 +119,54 @@ def _lotes_semana(columnas, filas, semanas_venta: dict | None = None) -> list[li
     return lotes or [[]]
 
 
-def _bloques(columnas, filas, semanas_venta: dict | None = None) -> list[list]:
+def _mapa_dias(columnas, filas) -> dict[str, str]:
+    bajos = [str(col).lower() for col in columnas]
+    if "id" not in bajos or "fecha" not in bajos:
+        return {}
+    idx_id = bajos.index("id")
+    idx_fecha = bajos.index("fecha")
+    mapa = {}
+    for fila in filas:
+        dia = _dia(fila[idx_fecha])
+        if dia:
+            mapa[str(fila[idx_id])] = dia
+    return mapa
+
+
+def _partir_dia(columnas, filas, dias_venta: dict | None = None) -> tuple[list, list]:
+    """El día más nuevo sale entero. El resto sigue después."""
+    idx_fecha = _indice_fecha(columnas)
+    bajos = [str(col).lower() for col in columnas]
+    idx_venta = bajos.index("id_venta") if "id_venta" in bajos else None
+    if idx_fecha is None and not (dias_venta and idx_venta is not None):
+        return [], list(filas)
+
+    def marca(fila) -> str:
+        if idx_fecha is not None:
+            return _dia(fila[idx_fecha])
+        return dias_venta.get(str(fila[idx_venta]), "") if dias_venta else ""
+
+    fechas = [marca(fila) for fila in filas if marca(fila)]
+    if not fechas:
+        return [], list(filas)
+    hoy = date.today().isoformat()
+    punta = hoy if hoy in fechas else max(fechas)
+    del_dia = []
+    resto = []
+    for fila in filas:
+        if marca(fila) == punta:
+            del_dia.append(fila)
+        else:
+            resto.append(fila)
+    return del_dia, resto
+
+
+def _bloques(columnas, filas, semanas_venta: dict | None = None, dias_venta: dict | None = None) -> list[list]:
+    del_dia, resto = _partir_dia(columnas, filas, dias_venta)
     bloques = []
-    for lote in _lotes_semana(columnas, filas, semanas_venta):
+    if del_dia:
+        bloques.append(list(del_dia))
+    for lote in _lotes_semana(columnas, resto, semanas_venta):
         if not lote:
             continue
         for inicio in range(0, len(lote), _TAMANO_PARTE):
@@ -459,9 +515,11 @@ def subir_base(
     errores = []
     hubo = False
     semanas_venta: dict[str, str] = {}
+    dias_venta: dict[str, str] = {}
     for tabla, columnas, todas in _fuente(ruta_db):
         if tabla == "ventas":
             semanas_venta = _mapa_semanas(columnas, todas)
+            dias_venta = _mapa_dias(columnas, todas)
         idx = _indice_id(columnas)
         previa = estado.get(tabla) or {}
         if idx is None:
@@ -488,9 +546,12 @@ def subir_base(
             modo = "delta"
         hubo = True
         guia = semanas_venta if _indice_fecha(columnas) is None else None
-        partes = _bloques(columnas, todas, guia)
+        dias = dias_venta if _indice_fecha(columnas) is None else None
+        partes = _bloques(columnas, todas, guia, dias)
         fallo = None
+        enviadas = 0
         for numero, bloque in enumerate(partes, start=1):
+            enviadas += len(bloque)
             cuerpo = {
                 "tabla": tabla,
                 "columnas": columnas,
@@ -501,6 +562,10 @@ def subir_base(
             }
             if modo == "delta" and numero == len(partes):
                 cuerpo["bajas"] = bajas
+            if tabla == "ventas":
+                cuerpo["total_filas"] = len(todas)
+                cuerpo["enviadas"] = enviadas
+                cuerpo["dia"] = numero == 1
             if sucursal_id not in (None, ""):
                 cuerpo["sucursal_id"] = int(sucursal_id)
                 cuerpo["branch_id"] = int(sucursal_id)

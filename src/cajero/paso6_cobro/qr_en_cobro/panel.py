@@ -147,8 +147,10 @@ class PanelQrCobro(QFrame):
         self._ref = ""
         self._token = ""
         self._borrar_url = ""
+        self._fuente = QPixmap()
         self._reloj.stop()
         self.imagen.clear()
+        self.distintivo.hide()
         self.estado.setText("Buscando el QR de Mercado Pago…")
         self.btn_imagen.hide()
         self.show()
@@ -164,6 +166,10 @@ class PanelQrCobro(QFrame):
         self._generacion += 1
         self._modo = "oculto"
         self._pago = {}
+        self._monto = 0.0
+        self._fuente = QPixmap()
+        self.imagen.clear()
+        self.distintivo.hide()
         self._reloj.stop()
         self._soltar_orden()
         self.hide()
@@ -259,12 +265,16 @@ class PanelQrCobro(QFrame):
         token = self._token
         self._borrar_url = ""
         self._ref = ""
-        if not url or not token:
+        if not url and not token:
             return
 
         def _trabajo():
             try:
-                MPApiClient.delete(url, token, timeout=5)
+                if url and token:
+                    MPApiClient.delete(url, token, timeout=4)
+                if token:
+                    from src.cajero.paso6_cobro.qr_en_cobro.pedido import borrar_orden_pos
+                    borrar_orden_pos(token)
             except Exception:
                 pass
 

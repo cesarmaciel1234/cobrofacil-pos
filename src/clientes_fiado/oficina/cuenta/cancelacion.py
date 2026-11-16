@@ -110,9 +110,9 @@ def anular_cargo_f3(cursor, id_venta):
     )
     cursor.execute(
         "INSERT INTO cuenta_corriente "
-        "(cliente_id, tipo, monto, saldo_resultante, descripcion, venta_id) "
-        "VALUES (?, 'ANULACION', ?, ?, ?, ?)",
-        (cliente_id, anulacion, nuevo_saldo, nota, id_venta),
+        "(cliente_id, fecha, tipo, monto, saldo_resultante, descripcion, venta_id) "
+        "VALUES (?, ?, 'ANULACION', ?, ?, ?, ?)",
+        (cliente_id, ahora, anulacion, nuevo_saldo, nota, id_venta),
     )
     try:
         from src.clientes_fiado.oficina.huella.eventos import movimiento_en

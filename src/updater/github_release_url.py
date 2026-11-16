@@ -113,4 +113,12 @@ RENDER_DESCARGA_URL = "https://crm-frigorifico.onrender.com/descarga"
 
 def release_zip_url_or_fallback() -> str:
     """El programa baja el zip por Render. Render entrega la última publicación."""
+    try:
+        from src.config import config
+
+        base = str(config.get("crm_url") or "").strip().rstrip("/")
+        if base:
+            return f"{base}/descarga"
+    except Exception:
+        pass
     return RENDER_DESCARGA_URL
