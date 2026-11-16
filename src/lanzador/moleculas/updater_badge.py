@@ -77,6 +77,20 @@ class SmartLauncherUpdater(QFrame):
         )
         lay.addWidget(self.lbl_status)
 
+        self.btn_verificar = QPushButton("Verificar")
+        self.btn_verificar.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.btn_verificar.setStyleSheet("""
+            QPushButton {
+                background: transparent; color: #166534; font-weight: 800;
+                font-size: 10px; padding: 2px 8px; border-radius: 6px;
+                border: 1px solid #86EFAC;
+            }
+            QPushButton:hover { background: #DCFCE7; }
+            QPushButton:disabled { color: #86EFAC; }
+        """)
+        self.btn_verificar.clicked.connect(self.check_for_updates_async)
+        lay.addWidget(self.btn_verificar)
+
         self.btn_action = QPushButton("⚡ Actualizar")
         self.btn_action.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.btn_action.setStyleSheet("""
@@ -115,7 +129,8 @@ class SmartLauncherUpdater(QFrame):
 
     def check_for_updates_async(self):
         try:
-            self.lbl_status.setText(f"v{self.local_ver}  ·  Consultando GitHub…")
+            self.lbl_status.setText(f"v{self.local_ver}  ·  Verificando…")
+            self.btn_verificar.setEnabled(False)
             self.lbl_status.setStyleSheet(
                 "font-size: 11px; font-weight: 700; color: #166534; border: none; background: transparent;"
             )
@@ -183,12 +198,15 @@ class SmartLauncherUpdater(QFrame):
         """)
         self.btn_action.hide()
         self.btn_action.setEnabled(True)
+        self.btn_verificar.setEnabled(True)
+        self.btn_verificar.show()
         self.setToolTip("")
 
     def _on_check_unreachable(self):
         if self.is_downloading or is_update_staged():
             return
-        self.lbl_status.setText(f"v{self.local_ver}  ·  Sin red GitHub  ⚠")
+        self.lbl_status.setText(f"v{self.local_ver}  ·  Sin conexión  ⚠")
+        self.btn_verificar.hide()
         self.lbl_status.setStyleSheet(
             "font-size: 11px; font-weight: 700; color: #9A3412; border: none; background: transparent;"
         )
@@ -209,8 +227,8 @@ class SmartLauncherUpdater(QFrame):
         self.btn_action.setEnabled(True)
         self.btn_action.show()
         self.setToolTip(
-            "No se pudo consultar GitHub (red o certificado SSL).\n"
-            "En VirtualBox / Windows nuevo es frecuente. Reintentá o reinstalá."
+            "No se pudo consultar la versión en la nube.\n"
+            "Reintentá cuando haya internet."
         )
 
     def _on_update_found(self, remote: str, local: str):
@@ -230,6 +248,7 @@ class SmartLauncherUpdater(QFrame):
                 padding: 2px 8px;
             }
         """)
+        self.btn_verificar.hide()
         self.btn_action.setText(f"⚡ Actualizar a v{remote}")
         try:
             self.btn_action.clicked.disconnect()
@@ -250,7 +269,7 @@ class SmartLauncherUpdater(QFrame):
         resp = QMessageBox.question(
             self,
             "🚀 Actualización Inteligente",
-            f"Se encontró la versión v{self.remote_ver} en GitHub.\n\n"
+            f"Se encontró la versión v{self.remote_ver} en la nube.\n\n"
             "El paquete pesa ~300 MB (incluye el sistema completo).\n"
             "La descarga la hace el actualizador autónomo (proceso aparte):\n"
             "si falla, el lanzador y los perfiles siguen trabajando.\n\n"
@@ -338,6 +357,7 @@ class SmartLauncherUpdater(QFrame):
     def _show_ready_to_apply(self, ask_dialog: bool = True):
         ver = self.remote_ver or ((_load_pending() or {}).get("remote_version") or "")
         self.remote_ver = str(ver)
+        self.btn_verificar.hide()
         self.btn_action.setText("🔄 Reiniciar y Aplicar")
         self.lbl_status.setText(f"✅ Versión v{self.remote_ver} lista — reiniciá para instalar.")
         self.setStyleSheet(
