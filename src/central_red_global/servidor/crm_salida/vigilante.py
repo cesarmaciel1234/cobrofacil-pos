@@ -222,6 +222,8 @@ def lanzar(credenciales: dict, forzar: bool = False) -> None:
         estado_nube.registrar_exito(
             tablas=dato.get("tablas", 0),
             filas=dato.get("filas", dato.get("leidos", 0)),
+            tickets=dato.get("tickets", dato.get("ventas", 0)),
+            clientes=dato.get("clientes", dato.get("leidos", 0)),
             empresa=credenciales.get("empresa"),
             sucursal=credenciales.get("sucursal"),
             mensaje=f"Sincronizado con éxito ({dato.get('tablas', 0)} tablas, {dato.get('filas', 0)} filas)",

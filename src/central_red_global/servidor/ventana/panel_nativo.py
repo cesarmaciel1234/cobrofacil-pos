@@ -15,6 +15,7 @@ from typing import Any
 from PyQt6.QtCore import QObject, Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QFrame,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -210,23 +211,47 @@ def _estilo_panel() -> str:
     #BtnSincronizar:hover {
         background-color: #059669;
     }
-    #CajaTelemetria {
-        background-color: rgba(15, 23, 42, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 8px;
-        padding: 10px;
+    #BtnLapiz {
+        background-color: rgba(59, 130, 246, 0.15);
+        border: 1px solid rgba(59, 130, 246, 0.4);
+        color: #93C5FD;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 700;
     }
-    #EtiquetaTelemetria {
-        color: #64748B;
+    #BtnLapiz:hover {
+        background-color: rgba(59, 130, 246, 0.3);
+        color: #FFFFFF;
+    }
+    #TarjetaKPI {
+        background-color: rgba(15, 23, 42, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 9px;
+    }
+    #TarjetaKPI:hover {
+        border-color: rgba(56, 189, 248, 0.3);
+        background-color: rgba(15, 23, 42, 0.9);
+    }
+    #KpiTitulo {
+        color: #94A3B8;
         font-size: 10px;
-        font-weight: 600;
-        text-transform: uppercase;
+        font-weight: 700;
         letter-spacing: 0.5px;
     }
-    #ValorTelemetria {
-        color: #E2E8F0;
-        font-size: 12px;
-        font-weight: 700;
+    #KpiValor {
+        font-size: 17px;
+        font-weight: 900;
+        letter-spacing: -0.3px;
+    }
+    #KpiSub {
+        color: #64748B;
+        font-size: 10px;
+    }
+    QLineEdit:read-only {
+        background-color: #0F172A;
+        border: 1px solid #1E293B;
+        color: #94A3B8;
     }
     """
 
@@ -242,6 +267,7 @@ class PanelNativoCRM(QWidget):
         self._senales.sig_sucursales.connect(self._al_recibir_sucursales)
         self._sucursales_nube: list[dict] = []
         self._en_proceso = False
+        self._modo_edicion = False
 
         self._construir_ui()
         self._cargar_datos_existentes()
@@ -350,6 +376,22 @@ class PanelNativoCRM(QWidget):
         self.caja_error.setVisible(False)
         t_lay.addWidget(self.caja_error)
 
+        # Cabecera de Formulario con Estado de Bloqueo y Botón Lápiz
+        sec_header = QHBoxLayout()
+        sec_header.setSpacing(8)
+        self.lbl_estado_bloqueo = QLabel("🔒 Configuración Protegida (Toca ✏️ para editar)")
+        self.lbl_estado_bloqueo.setStyleSheet("color: #38BDF8; font-size: 11px; font-weight: 700;")
+
+        self.btn_lapiz = QPushButton("✏️ Modificar")
+        self.btn_lapiz.setObjectName("BtnLapiz")
+        self.btn_lapiz.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_lapiz.clicked.connect(self._toggle_edicion)
+
+        sec_header.addWidget(self.lbl_estado_bloqueo)
+        sec_header.addStretch(1)
+        sec_header.addWidget(self.btn_lapiz)
+        t_lay.addLayout(sec_header)
+
         # Formulario
         # 1. URL CRM
         lbl_url = QLabel("Dirección del CRM (Nube)")
@@ -422,16 +464,37 @@ class PanelNativoCRM(QWidget):
         self.lbl_sucursal_info.setWordWrap(True)
         t_lay.addWidget(self.lbl_sucursal_info)
 
-        # Telemetría Grid (5 cajas compactas)
-        tele_box = QHBoxLayout()
-        tele_box.setSpacing(6)
+        # Dashboard de Telemetría Premium (Grilla 3x2)
+        grid_tele = QGridLayout()
+        grid_tele.setHorizontalSpacing(8)
+        grid_tele.setVerticalSpacing(8)
 
-        self.lbl_tele_envio = self._crear_caja_telemetria("ÚLTIMO ENVÍO", "—", tele_box)
-        self.lbl_tele_filas = self._crear_caja_telemetria("DATOS", "0 filas", tele_box)
-        self.lbl_tele_latencia = self._crear_caja_telemetria("LATENCIA", "—", tele_box)
-        self.lbl_tele_empresa = self._crear_caja_telemetria("EMPRESA", "—", tele_box)
-        self.lbl_tele_sucursal = self._crear_caja_telemetria("SUCURSAL", "—", tele_box)
-        t_lay.addLayout(tele_box)
+        card_t, self.lbl_kpi_tickets = self._crear_tarjeta_kpi(
+            "🎫", "TICKETS ENVIADOS", "—", "Ventas en la nube", "#38BDF8"
+        )
+        card_c, self.lbl_kpi_clientes = self._crear_tarjeta_kpi(
+            "👥", "CLIENTES EN CARTERA", "—", "Cuentas fidelizadas", "#34D399"
+        )
+        card_f, self.lbl_kpi_filas = self._crear_tarjeta_kpi(
+            "📦", "CATÁLOGO Y DELTAS", "—", "Líneas sincronizadas", "#A78BFA"
+        )
+        card_l, self.lbl_kpi_latencia = self._crear_tarjeta_kpi(
+            "⚡", "LATENCIA NUBE", "—", "Render · Neon Postgres", "#34D399"
+        )
+        card_e, self.lbl_kpi_envio = self._crear_tarjeta_kpi(
+            "⏱️", "ÚLTIMA SUBIDA", "—", "Sincronización en vivo", "#FBBF24"
+        )
+        card_s, self.lbl_kpi_sucursal = self._crear_tarjeta_kpi(
+            "🏢", "SUCURSAL ASIGNADA", "—", "Identidad del nodo", "#E2E8F0"
+        )
+
+        grid_tele.addWidget(card_t, 0, 0)
+        grid_tele.addWidget(card_c, 0, 1)
+        grid_tele.addWidget(card_f, 0, 2)
+        grid_tele.addWidget(card_l, 1, 0)
+        grid_tele.addWidget(card_e, 1, 1)
+        grid_tele.addWidget(card_s, 1, 2)
+        t_lay.addLayout(grid_tele)
 
         lay_raiz.addWidget(tarjeta)
 
@@ -460,26 +523,46 @@ class PanelNativoCRM(QWidget):
         self.btn_conectar.setObjectName("BtnPrincipal")
         self.btn_conectar.setCursor(Qt.CursorShape.PointingHandCursor)
         self.btn_conectar.setDefault(True)
-        self.btn_conectar.clicked.connect(self._al_click_conectar)
+        self.btn_conectar.clicked.connect(self._al_click_boton_inferior)
         lay_inf.addWidget(self.btn_conectar)
 
         layout_principal.addWidget(barra_inferior)
 
-    def _crear_caja_telemetria(self, titulo: str, inicial: str, layout: QHBoxLayout) -> QLabel:
+    def _crear_tarjeta_kpi(
+        self,
+        icono: str,
+        titulo: str,
+        inicial: str,
+        subtitulo: str,
+        color_val: str,
+    ) -> tuple[QFrame, QLabel]:
         frame = QFrame(self)
-        frame.setObjectName("CajaTelemetria")
+        frame.setObjectName("TarjetaKPI")
         flay = QVBoxLayout(frame)
-        flay.setContentsMargins(6, 6, 6, 6)
+        flay.setContentsMargins(10, 8, 10, 8)
         flay.setSpacing(2)
 
+        top = QHBoxLayout()
+        top.setSpacing(6)
+        lbl_ico = QLabel(icono, frame)
+        lbl_ico.setStyleSheet("font-size: 13px;")
         lbl_tit = QLabel(titulo, frame)
-        lbl_tit.setObjectName("EtiquetaTelemetria")
+        lbl_tit.setObjectName("KpiTitulo")
+        top.addWidget(lbl_ico)
+        top.addWidget(lbl_tit)
+        top.addStretch(1)
+        flay.addLayout(top)
+
         lbl_val = QLabel(inicial, frame)
-        lbl_val.setObjectName("ValorTelemetria")
-        flay.addWidget(lbl_tit)
+        lbl_val.setObjectName("KpiValor")
+        lbl_val.setStyleSheet(f"color: {color_val};")
         flay.addWidget(lbl_val)
-        layout.addWidget(frame, 1)
-        return lbl_val
+
+        lbl_sub = QLabel(subtitulo, frame)
+        lbl_sub.setObjectName("KpiSub")
+        flay.addWidget(lbl_sub)
+
+        return frame, lbl_val
 
     def _toggle_ojo_password(self) -> None:
         if self.txt_password.echoMode() == QLineEdit.EchoMode.Password:
@@ -505,8 +588,53 @@ class PanelNativoCRM(QWidget):
                 self.txt_password.setText(pwd)
             self.txt_sucursal_id.setText(suc_id)
             self.txt_sucursal.setText(suc)
+
+            # Si ya existen credenciales guardadas, inicia protegido/bloqueado
+            if url and empresa and suc:
+                self._modo_edicion = False
+            else:
+                self._modo_edicion = True
+            self._aplicar_bloqueo_edicion()
         except Exception as exc:
             logger.debug(f"Error cargando config inicial: {exc}")
+
+    def _toggle_edicion(self) -> None:
+        self._modo_edicion = not self._modo_edicion
+        self._aplicar_bloqueo_edicion()
+        if self._modo_edicion:
+            self.txt_empresa.setFocus()
+
+    def _aplicar_bloqueo_edicion(self) -> None:
+        bloqueado = not self._modo_edicion
+        self.txt_url.setReadOnly(bloqueado)
+        self.txt_empresa.setReadOnly(bloqueado)
+        self.txt_password.setReadOnly(bloqueado)
+        self.txt_sucursal_id.setReadOnly(bloqueado)
+        self.txt_sucursal.setReadOnly(bloqueado)
+        self.btn_ojo.setEnabled(not bloqueado)
+
+        if bloqueado:
+            self.lbl_estado_bloqueo.setText("🔒 Configuración Protegida (Toca ✏️ para editar)")
+            self.lbl_estado_bloqueo.setStyleSheet("color: #38BDF8; font-size: 11px; font-weight: 700;")
+            self.btn_lapiz.setText("✏️ Modificar")
+            self.btn_conectar.setText("⚡ Sincronizar Ahora con la Nube")
+            self.btn_conectar.setStyleSheet(
+                "background-color: #10B981; color: #FFFFFF; font-size: 14px; font-weight: 700; border-radius: 8px; padding: 12px;"
+            )
+        else:
+            self.lbl_estado_bloqueo.setText("✏️ Modo Edición Activo — Ingrese credenciales")
+            self.lbl_estado_bloqueo.setStyleSheet("color: #FBBF24; font-size: 11px; font-weight: 700;")
+            self.btn_lapiz.setText("🔒 Bloquear")
+            self.btn_conectar.setText("🚀 Guardar y Conectar")
+            self.btn_conectar.setStyleSheet(
+                "background-color: #2563EB; color: #FFFFFF; font-size: 14px; font-weight: 700; border-radius: 8px; padding: 12px;"
+            )
+
+    def _al_click_boton_inferior(self) -> None:
+        if self._modo_edicion:
+            self._al_click_conectar()
+        else:
+            self._al_click_sincronizar()
 
     def _refrescar_estado(self) -> None:
         if self._en_proceso:
@@ -523,15 +651,22 @@ class PanelNativoCRM(QWidget):
         ultimo_envio = est.get("ultimo_envio_exitoso") or est.get("ultimo_envio")
         filas = est.get("filas_enviadas") or est.get("filas_totales") or 0
 
-        # Actualizar Telemetría
+        # Actualizar Telemetría Premium
+        tickets = est.get("tickets_totales") or 0
+        clientes = est.get("clientes_totales") or 0
         duracion = est.get("duracion_segundos")
         dur_txt = f" ({duracion}s)" if duracion else ""
-        self.lbl_tele_envio.setText((ultimo_envio[-8:] + dur_txt) if ultimo_envio else "—")
-        self.lbl_tele_filas.setText(f"{filas} filas")
+
+        self.lbl_kpi_tickets.setText(f"{tickets:,}".replace(",", ".") if tickets else "0")
+        self.lbl_kpi_clientes.setText(f"{clientes:,}".replace(",", ".") if clientes else "0")
+        self.lbl_kpi_filas.setText(f"{filas:,} filas".replace(",", ".") if filas else "0 filas")
+
         lat = est.get("latencia_ms")
-        self.lbl_tele_latencia.setText(f"{int(lat)} ms" if lat is not None else "—")
-        self.lbl_tele_empresa.setText(empresa or "—")
-        self.lbl_tele_sucursal.setText(sucursal or "—")
+        lat_txt = f"● {int(lat)} ms" if lat is not None else ("● Activo" if activo else "— ms")
+        self.lbl_kpi_latencia.setText(lat_txt)
+
+        self.lbl_kpi_envio.setText((ultimo_envio[-8:] + dur_txt) if ultimo_envio else "—")
+        self.lbl_kpi_sucursal.setText(f"#{est.get('sucursal_id', '1')} {sucursal}" if sucursal else "—")
 
         if est.get("sincronizando"):
             self.banner_estado.setProperty("class", "neutral")
@@ -670,10 +805,14 @@ class PanelNativoCRM(QWidget):
 
             self.btn_sincronizar.setEnabled(False)
             self.btn_sincronizar.setText("⏳ Sincronizando...")
+            self.btn_conectar.setEnabled(False)
+            self.btn_conectar.setText("⏳ Sincronizando con Render...")
             self.lbl_estado_desc.setText("Enviando deltas locales a la nube...")
             pedir_vuelta(forzar=True)
             QTimer.singleShot(6000, lambda: self.btn_sincronizar.setEnabled(True))
             QTimer.singleShot(6000, lambda: self.btn_sincronizar.setText("⚡ Sincronizar"))
+            QTimer.singleShot(6000, lambda: self.btn_conectar.setEnabled(True))
+            QTimer.singleShot(6000, self._aplicar_bloqueo_edicion)
         except Exception as exc:
             logger.warning(f"Error pidiendo sincronización: {exc}")
 
@@ -767,8 +906,12 @@ class PanelNativoCRM(QWidget):
     def _al_terminar_conexion(self, ok: bool, titulo: str, detalle: str, empresa_id: str) -> None:
         self._en_proceso = False
         self.btn_conectar.setEnabled(True)
-        self.btn_conectar.setText("🚀 Conectar y Enlazar")
         self.btn_reconectar.setEnabled(True)
+        if ok:
+            self._modo_edicion = False
+            self._aplicar_bloqueo_edicion()
+        else:
+            self.btn_conectar.setText("🚀 Guardar y Conectar")
         self._refrescar_estado()
 
     def _consultar_sucursales_en_fondo(self) -> None:

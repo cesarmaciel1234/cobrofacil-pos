@@ -34,6 +34,8 @@ class GestorEstado:
             "ultima_bajada": None,
             "filas_totales": 0,
             "tablas_totales": 0,
+            "tickets_totales": 0,
+            "clientes_totales": 0,
             "ultimo_error": None,
             "reintentos": 0,
             "resiliencia": "Modo Autónomo Activo — La tienda opera 100% offline si falla internet",
@@ -96,6 +98,25 @@ class GestorEstado:
                     self._estado["sucursal_id"] = sucursal_id
             except Exception:
                 pass
+
+            # Si aún no se computó el conteo de tickets y clientes, leer base local como piso
+            if not self._estado.get("tickets_totales") or not self._estado.get("clientes_totales"):
+                try:
+                    import sqlite3
+
+                    base = os.path.dirname(os.path.abspath(__file__))
+                    raiz = os.path.abspath(os.path.join(base, "..", "..", "..", "..", ".."))
+                    r_db = os.path.join(raiz, "punpro.db")
+                    if os.path.isfile(r_db):
+                        with sqlite3.connect(f"file:{r_db}?mode=ro", uri=True) as conn:
+                            cur = conn.cursor()
+                            if not self._estado.get("tickets_totales"):
+                                self._estado["tickets_totales"] = int(cur.execute("SELECT COUNT(*) FROM ventas").fetchone()[0] or 0)
+                            if not self._estado.get("clientes_totales"):
+                                self._estado["clientes_totales"] = int(cur.execute("SELECT COUNT(*) FROM clientes").fetchone()[0] or 0)
+                except Exception:
+                    pass
+
             return dict(self._estado)
 
     def registrar_latencia(self, ms: float) -> None:
@@ -140,6 +161,8 @@ class GestorEstado:
         *,
         tablas: int | None = None,
         filas: int | None = None,
+        tickets: int | None = None,
+        clientes: int | None = None,
         empresa: str | None = None,
         sucursal: str | None = None,
         mensaje: str = "Conectado y sincronizado con éxito",
@@ -157,6 +180,10 @@ class GestorEstado:
                 self._estado["sucursal"] = sucursal
             if duracion_seg is not None:
                 self._estado["duracion_segundos"] = round(duracion_seg, 2)
+            if tickets is not None:
+                self._estado["tickets_totales"] = tickets
+            if clientes is not None:
+                self._estado["clientes_totales"] = clientes
             if tablas is not None or filas is not None:
                 marca = time.strftime("%Y-%m-%d %H:%M:%S")
                 self._estado["ultimo_envio"] = marca

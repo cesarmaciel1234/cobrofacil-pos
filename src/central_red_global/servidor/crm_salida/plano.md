@@ -51,16 +51,25 @@ src/central_red_global/servidor/crm_salida/
      * `⚠️ ERROR DE ENLACE`: Badge carmesí con detalle claro del fallo (ej. contraseña incorrecta, timeout de Render o falta de internet) y botón destacado de **🔄 RECONECTAR**.
      * `⏳ CONECTANDO`: Indicador rotativo mientras valida credenciales.
      * `⚪ NO ENLAZADO`: Estado inicial de espera.
-   * **Formulario de Enlace:**
+   * **Formulario de Enlace con Bloqueo y Lápiz de Edición:**
+     * **Bloqueo Inteligente:** Una vez configurado y enlazado, los campos quedan bloqueados (`read-only`) para evitar modificaciones accidentales en operación diaria.
+     * **Botón Lápiz (`✏️ Modificar`):** Permite desbloquear la edición para cambiar contraseña, sucursal o URL, transformando el botón inferior en `🚀 Guardar y Conectar`.
      * **URL del CRM:** Por defecto `https://crm-frigorifico.onrender.com`.
      * **Empresa / Usuario:** Nombre comercial con el que se identifica la cuenta (ej. `maciel`).
      * **Contraseña:** Campo protegido con botón de alternar visibilidad.
      * **ID de Sucursal:** Número identificador (ej. `1`).
      * **Nombre de Sucursal [OBLIGATORIO]:** Campo estrictamente requerido con validación en frontend y backend.
+   * **Dashboard de Telemetría Premium (Grilla 3x2):**
+     * `🎫 TICKETS ENVIADOS`: Conteo total de tickets y ventas enviadas a la nube.
+     * `👥 CLIENTES EN CARTERA`: Cartera de clientes fidelizados sincronizados con el CRM.
+     * `📦 CATÁLOGO Y DELTAS`: Filas totales y cambios incrementales de catálogo.
+     * `⚡ LATENCIA NUBE`: Round-trip HTTP en tiempo real hacia Render / Neon DB (ej. `● 84 ms`).
+     * `⏱️ ÚLTIMA SUBIDA`: Timestamp y duración de la última sincronización.
+     * `🏢 SUCURSAL ASIGNADA`: Número y nombre de la sucursal activa.
    * **Botones de Acción:**
-     * `[Conectar y Enlazar]`: Valida campos, prueba conexión contra Render, guarda la configuración y despierta la sincronización.
+     * `[⚡ Sincronizar Ahora con la Nube]`: Botón principal de la barra inferior cuando la configuración está bloqueada/activa.
+     * `[🚀 Guardar y Conectar]`: Botón activo cuando se edita con el lápiz.
      * `[Reconectar]`: Visible cuando ocurre un fallo o cold start para reintentar la conexión de inmediato.
-     * `[Sincronizar Ahora]`: Fuerza el envío inmediato sin esperar el intervalo programado.
    * **Banner de Seguridad:** Aviso visible confirmando que la tienda local trabaja en modo 100% autónomo y blindado.
 
 ---

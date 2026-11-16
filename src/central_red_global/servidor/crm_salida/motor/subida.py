@@ -537,10 +537,15 @@ def subir_base(
     hubo = False
     semanas_venta: dict[str, str] = {}
     dias_venta: dict[str, str] = {}
+    conteo_ventas = 0
+    conteo_clientes = 0
     for tabla, columnas, todas in _fuente(ruta_db):
         if tabla == "ventas":
+            conteo_ventas = len(todas)
             semanas_venta = _mapa_semanas(columnas, todas)
             dias_venta = _mapa_dias(columnas, todas)
+        elif tabla == "clientes":
+            conteo_clientes = len(todas)
         idx = _indice_id(columnas)
         previa = estado.get(tabla) or {}
         if idx is None:
@@ -643,7 +648,14 @@ def subir_base(
             pass
     if not errores:
         guardar_estado(ruta_db, nuevo)
-    return {"tablas": tablas_ok, "filas": filas, "errores": errores, "delta": True}
+    return {
+        "tablas": tablas_ok,
+        "filas": filas,
+        "errores": errores,
+        "delta": True,
+        "ventas": conteo_ventas,
+        "clientes": conteo_clientes,
+    }
 
 
 def resolver_empresa(crm_url: str, api_key: str, nombre: str, timeout: int = 20) -> str:
@@ -877,6 +889,8 @@ def main() -> int:
         resultado["leidos"] = len(clientes)
         resultado["tablas"] = base["tablas"]
         resultado["filas"] = base["filas"]
+        resultado["tickets"] = base.get("ventas", 0)
+        resultado["clientes"] = len(clientes) or base.get("clientes", 0)
         resultado["errores_base"] = base["errores"]
         resultado["duracion"] = round(duracion, 2)
 
@@ -884,6 +898,8 @@ def main() -> int:
         estado_nube.registrar_exito(
             tablas=base["tablas"],
             filas=base["filas"],
+            tickets=base.get("ventas", 0),
+            clientes=len(clientes) or base.get("clientes", 0),
             empresa=nombre_empresa or usuario,
             sucursal=sucursal,
             mensaje=f"Lote enviado con éxito ({base['tablas']} tablas, {base['filas']} filas en {duracion:.1f}s)",
