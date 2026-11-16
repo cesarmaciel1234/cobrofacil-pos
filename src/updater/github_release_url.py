@@ -108,11 +108,9 @@ def resolve_release_zip_url(timeout: int = 30) -> str | None:
     return None
 
 
+RENDER_DESCARGA_URL = "https://crm-frigorifico.onrender.com/descarga"
+
+
 def release_zip_url_or_fallback() -> str:
-    """URL resuelta por API o patrón legacy (puede fallar si no hay release)."""
-    resolved = resolve_release_zip_url()
-    if resolved:
-        return resolved
-    return (
-        f"https://github.com/{GITHUB_REPO}/releases/latest/download/{RELEASE_ZIP_NAME}"
-    )
+    """El programa baja el zip por Render. Render entrega la última publicación."""
+    return RENDER_DESCARGA_URL

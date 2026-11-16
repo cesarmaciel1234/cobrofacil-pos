@@ -77,8 +77,9 @@ def download_release_zip(
     session = _session()
 
     try:
+        espera = (90, READ_TIMEOUT) if "onrender.com" in (url or "") else REQUEST_TIMEOUT
         head = session.head(
-            url, allow_redirects=True, timeout=REQUEST_TIMEOUT, verify=verify
+            url, allow_redirects=True, timeout=espera, verify=verify
         )
         head.raise_for_status()
     except Exception:

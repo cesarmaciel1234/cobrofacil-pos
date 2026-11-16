@@ -350,45 +350,12 @@ def _create_lnk(lnk_path, target_exe, args="", window_style=None, desc=""):
     return os.path.exists(lnk_path)
 
 
+RENDER_DESCARGA_URL = "https://crm-frigorifico.onrender.com/descarga"
+
+
 def _resolve_release_zip_url():
-    """Obtiene la URL real del ZIP desde la API de GitHub Releases."""
-    import json as _json
-
-    headers = {
-        "User-Agent": "CobroFacil-Installer/2026",
-        "Accept": "application/vnd.github+json",
-    }
-    api_base = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
-
-    def _pick_url(release):
-        for asset in release.get("assets") or []:
-            if asset.get("name") == GITHUB_RELEASE_ZIP_NAME:
-                return asset.get("browser_download_url")
-        return None
-
-    for api_url in (f"{api_base}/latest", f"{api_base}?per_page=10"):
-        try:
-            req = urllib.request.Request(api_url, headers=headers)
-            with _urlopen(req, timeout=30) as resp:
-                data = _json.loads(resp.read().decode("utf-8"))
-            if isinstance(data, list):
-                for release in data:
-                    url = _pick_url(release)
-                    if url:
-                        return url
-            else:
-                url = _pick_url(data)
-                if url:
-                    return url
-        except urllib.error.HTTPError as exc:
-            _log_installer_error(f"API releases ({api_url}): HTTP {exc.code}")
-        except Exception as exc:
-            _log_installer_error(f"API releases ({api_url}): {exc}")
-
-    return (
-        f"https://github.com/{GITHUB_REPO}/releases/latest/download/"
-        f"{GITHUB_RELEASE_ZIP_NAME}"
-    )
+    """El instalador baja el sistema por Render. Render redirige al zip."""
+    return RENDER_DESCARGA_URL
 
 
 def _log_installer_error(message):

@@ -5,7 +5,7 @@ Aislado y desacoplado:
 - No escribe en la caja ni en MariaDB.
 - Filtra claves y secretos antes de enviar a la nube.
 - Maneja cold start de Render (reintentos 502/503/504).
-- Divide en lotes de 150 filas para no saturar memoria.
+- La semana más nueva sale primero. Cada semana viaja de a 150 filas.
 """
 
 from __future__ import annotations
@@ -22,12 +22,100 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import date
 
 from src.central_red_global.servidor.crm_salida.motor.estado import estado_nube
 
 logger = logging.getLogger("crm_salida.subida")
 
 _TABLA = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+# La pantalla abre por ventas. Esas tablas salen antes que el resto del libro.
+_PRIMERO = (
+    "ventas",
+    "detalles_ventas",
+    "ventas_items",
+    "clientes",
+    "cuenta_corriente",
+    "productos",
+    "configuracion",
+)
+
+
+def _ordenar_tablas(nombres: list[str]) -> list[str]:
+    puesto = {nombre: i for i, nombre in enumerate(_PRIMERO)}
+    return sorted(
+        nombres,
+        key=lambda nombre: (nombre not in puesto, puesto.get(nombre, 0), nombre),
+    )
+
+
+def _indice_fecha(columnas) -> int | None:
+    bajos = [str(col).lower() for col in columnas]
+    for nombre in ("fecha", "fecha_hora", "fecha_venta", "fecha_cierre", "created_at"):
+        if nombre in bajos:
+            return bajos.index(nombre)
+    return None
+
+
+def _lunes(valor) -> str:
+    texto = str(valor or "").strip()[:10]
+    if len(texto) != 10 or texto[4] != "-" or texto[7] != "-":
+        return ""
+    try:
+        dia = date.fromisoformat(texto)
+    except ValueError:
+        return ""
+    lunes = dia.fromordinal(dia.toordinal() - dia.weekday())
+    return lunes.isoformat()
+
+
+def _mapa_semanas(columnas, filas) -> dict[str, str]:
+    bajos = [str(col).lower() for col in columnas]
+    if "id" not in bajos or "fecha" not in bajos:
+        return {}
+    idx_id = bajos.index("id")
+    idx_fecha = bajos.index("fecha")
+    mapa = {}
+    for fila in filas:
+        lunes = _lunes(fila[idx_fecha])
+        if lunes:
+            mapa[str(fila[idx_id])] = lunes
+    return mapa
+
+
+def _lotes_semana(columnas, filas, semanas_venta: dict | None = None) -> list[list]:
+    """Agrupa por semana, de la más nueva a la más vieja. Sin fecha, un solo lote."""
+    idx_fecha = _indice_fecha(columnas)
+    bajos = [str(col).lower() for col in columnas]
+    idx_venta = bajos.index("id_venta") if "id_venta" in bajos else None
+    if idx_fecha is None and idx_venta is None:
+        return [list(filas)]
+    grupos: dict[str, list] = {}
+    sin_fecha = []
+    for fila in filas:
+        lunes = ""
+        if idx_fecha is not None:
+            lunes = _lunes(fila[idx_fecha])
+        elif semanas_venta and idx_venta is not None:
+            lunes = semanas_venta.get(str(fila[idx_venta]), "")
+        if not lunes:
+            sin_fecha.append(fila)
+            continue
+        grupos.setdefault(lunes, []).append(fila)
+    lotes = [grupos[clave] for clave in sorted(grupos, reverse=True)]
+    if sin_fecha:
+        lotes.append(sin_fecha)
+    return lotes or [[]]
+
+
+def _bloques(columnas, filas, semanas_venta: dict | None = None) -> list[list]:
+    bloques = []
+    for lote in _lotes_semana(columnas, filas, semanas_venta):
+        if not lote:
+            continue
+        for inicio in range(0, len(lote), _TAMANO_PARTE):
+            bloques.append(lote[inicio : inicio + _TAMANO_PARTE])
+    return bloques or [[]]
 _SECRETOS = ("password", "passwd", "token", "secret", "api_key", "access_token", "refresh_token")
 _TAMANO_PARTE = 150
 
@@ -100,14 +188,18 @@ def manifiesto(ruta_db: str) -> str:
     trozos = []
     for tabla, columnas, filas in _fuente(ruta_db):
         trozos.append(
-            json.dumps(
-                {"tabla": tabla, "columnas": columnas, "filas": filas},
-                ensure_ascii=False,
-                sort_keys=True,
-                default=str,
+            (
+                tabla,
+                json.dumps(
+                    {"tabla": tabla, "columnas": columnas, "filas": filas},
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    default=str,
+                ),
             )
         )
-    return hashlib.sha256("\n".join(trozos).encode("utf-8")).hexdigest()
+    trozos.sort(key=lambda item: item[0])
+    return hashlib.sha256("\n".join(texto for _, texto in trozos).encode("utf-8")).hexdigest()
 
 
 def _fuente(ruta_db: str):
@@ -174,7 +266,7 @@ def leer_mariadb():
                 "SELECT TABLE_NAME FROM information_schema.TABLES "
                 "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME"
             )
-            nombres = [row[0] for row in cur.fetchall()]
+            nombres = _ordenar_tablas([row[0] for row in cur.fetchall()])
         for nombre in nombres:
             if not _TABLA.match(str(nombre)):
                 continue
@@ -259,12 +351,14 @@ def leer_base(ruta_db: str):
     """Generador de todas las tablas en modo solo lectura. Filtra contraseñas."""
     conn = sqlite3.connect(f"file:{ruta_db}?mode=ro", uri=True)
     try:
-        nombres = [
-            row[0]
-            for row in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
-            )
-        ]
+        nombres = _ordenar_tablas(
+            [
+                row[0]
+                for row in conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+                )
+            ]
+        )
         for nombre in nombres:
             if not _TABLA.match(nombre):
                 continue
@@ -360,8 +454,14 @@ def subir_base(
     abridor = opener.open if opener is not None else urllib.request.urlopen
     estado = leer_estado(ruta_db)
     nuevo = dict(estado)
-    pendientes = []
+    tablas_ok = 0
+    filas = 0
+    errores = []
+    hubo = False
+    semanas_venta: dict[str, str] = {}
     for tabla, columnas, todas in _fuente(ruta_db):
+        if tabla == "ventas":
+            semanas_venta = _mapa_semanas(columnas, todas)
         idx = _indice_id(columnas)
         previa = estado.get(tabla) or {}
         if idx is None:
@@ -369,30 +469,26 @@ def subir_base(
             nuevo[tabla] = {"modo": "tabla", "huella": huella_tabla}
             if previa.get("huella") == huella_tabla:
                 continue
-            pendientes.append((tabla, columnas, todas, [], "reemplazo"))
-            continue
-        actuales = {}
-        cambiadas = []
-        for fila in todas:
-            clave = str(fila[idx])
-            firma = _huella_fila(fila)
-            actuales[clave] = firma
-            if (previa.get("filas") or {}).get(clave) != firma:
-                cambiadas.append(fila)
-        bajas = [clave for clave in (previa.get("filas") or {}) if clave not in actuales]
-        nuevo[tabla] = {"modo": "id", "filas": actuales}
-        if not cambiadas and not bajas:
-            continue
-        pendientes.append((tabla, columnas, cambiadas, bajas, "delta"))
-    if not pendientes:
-        if nuevo != estado:
-            guardar_estado(ruta_db, nuevo)
-        return {"tablas": 0, "filas": 0, "errores": [], "delta": True}
-    tablas_ok = 0
-    filas = 0
-    errores = []
-    for tabla, columnas, todas, bajas, modo in pendientes:
-        partes = [todas[i : i + _TAMANO_PARTE] for i in range(0, len(todas), _TAMANO_PARTE)] or [[]]
+            bajas = []
+            modo = "reemplazo"
+        else:
+            actuales = {}
+            cambiadas = []
+            for fila in todas:
+                clave = str(fila[idx])
+                firma = _huella_fila(fila)
+                actuales[clave] = firma
+                if (previa.get("filas") or {}).get(clave) != firma:
+                    cambiadas.append(fila)
+            bajas = [clave for clave in (previa.get("filas") or {}) if clave not in actuales]
+            nuevo[tabla] = {"modo": "id", "filas": actuales}
+            if not cambiadas and not bajas:
+                continue
+            todas = cambiadas
+            modo = "delta"
+        hubo = True
+        guia = semanas_venta if _indice_fecha(columnas) is None else None
+        partes = _bloques(columnas, todas, guia)
         fallo = None
         for numero, bloque in enumerate(partes, start=1):
             cuerpo = {
@@ -433,9 +529,9 @@ def subir_base(
                     sesion_vencida = "No autorizado" in texto or "expirada" in texto.lower()
                     if reentrar is not None and sesion_vencida and reintentos_sesion < 2:
                         reintentos_sesion += 1
-                        nuevo = reentrar()
-                        if nuevo is not None:
-                            abridor = nuevo.open if hasattr(nuevo, "open") else nuevo
+                        sesion = reentrar()
+                        if sesion is not None:
+                            abridor = sesion.open if hasattr(sesion, "open") else sesion
                         time.sleep(2)
                         continue
                     fallo = {"tabla": tabla, "parte": numero, "error": texto[:180]}
