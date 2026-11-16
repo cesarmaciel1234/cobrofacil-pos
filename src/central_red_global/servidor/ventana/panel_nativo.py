@@ -422,12 +422,13 @@ class PanelNativoCRM(QWidget):
         self.lbl_sucursal_info.setWordWrap(True)
         t_lay.addWidget(self.lbl_sucursal_info)
 
-        # Telemetría Grid (4 cajas compactas)
+        # Telemetría Grid (5 cajas compactas)
         tele_box = QHBoxLayout()
-        tele_box.setSpacing(8)
+        tele_box.setSpacing(6)
 
         self.lbl_tele_envio = self._crear_caja_telemetria("ÚLTIMO ENVÍO", "—", tele_box)
         self.lbl_tele_filas = self._crear_caja_telemetria("DATOS", "0 filas", tele_box)
+        self.lbl_tele_latencia = self._crear_caja_telemetria("LATENCIA", "—", tele_box)
         self.lbl_tele_empresa = self._crear_caja_telemetria("EMPRESA", "—", tele_box)
         self.lbl_tele_sucursal = self._crear_caja_telemetria("SUCURSAL", "—", tele_box)
         t_lay.addLayout(tele_box)
@@ -523,18 +524,34 @@ class PanelNativoCRM(QWidget):
         filas = est.get("filas_enviadas") or est.get("filas_totales") or 0
 
         # Actualizar Telemetría
-        self.lbl_tele_envio.setText(ultimo_envio[-8:] if ultimo_envio else "—")
+        duracion = est.get("duracion_segundos")
+        dur_txt = f" ({duracion}s)" if duracion else ""
+        self.lbl_tele_envio.setText((ultimo_envio[-8:] + dur_txt) if ultimo_envio else "—")
         self.lbl_tele_filas.setText(f"{filas} filas")
+        lat = est.get("latencia_ms")
+        self.lbl_tele_latencia.setText(f"{int(lat)} ms" if lat is not None else "—")
         self.lbl_tele_empresa.setText(empresa or "—")
         self.lbl_tele_sucursal.setText(sucursal or "—")
 
-        if activo:
+        if est.get("sincronizando"):
+            self.banner_estado.setProperty("class", "neutral")
+            self.lbl_estado_titulo.setProperty("class", "neutral")
+            self.lbl_estado_titulo.setText("⏳ SINCRONIZANDO CON LA NUBE...")
+            self.lbl_estado_desc.setText(est.get("mensaje") or "Transmitiendo deltas a Render...")
+            self.btn_reconectar.setVisible(False)
+            self.btn_sincronizar.setEnabled(False)
+            self.btn_sincronizar.setText("⏳ Enviando...")
+            self.caja_error.setVisible(False)
+        elif activo:
             self.banner_estado.setProperty("class", "conectado")
             self.lbl_estado_titulo.setProperty("class", "conectado")
-            self.lbl_estado_titulo.setText("● ENLACE ACTIVO / CONECTADO")
+            lat_txt = f" · {int(lat)} ms" if lat is not None else ""
+            self.lbl_estado_titulo.setText(f"● ENLACE ACTIVO / CONECTADO{lat_txt}")
             self.lbl_estado_desc.setText(f"Sucursal #{est.get('sucursal_id', '1')} {sucursal} vinculada con {empresa}")
             self.btn_reconectar.setVisible(False)
             self.btn_sincronizar.setVisible(True)
+            self.btn_sincronizar.setEnabled(True)
+            self.btn_sincronizar.setText("⚡ Sincronizar")
             self.caja_error.setVisible(False)
         elif error:
             self.banner_estado.setProperty("class", "desconectado")
@@ -651,8 +668,12 @@ class PanelNativoCRM(QWidget):
         try:
             from src.central_red_global.servidor.crm_salida.vigilante import pedir_vuelta
 
-            pedir_vuelta()
-            self.lbl_estado_desc.setText("Sincronización manual solicitada al vigilante...")
+            self.btn_sincronizar.setEnabled(False)
+            self.btn_sincronizar.setText("⏳ Sincronizando...")
+            self.lbl_estado_desc.setText("Enviando deltas locales a la nube...")
+            pedir_vuelta(forzar=True)
+            QTimer.singleShot(6000, lambda: self.btn_sincronizar.setEnabled(True))
+            QTimer.singleShot(6000, lambda: self.btn_sincronizar.setText("⚡ Sincronizar"))
         except Exception as exc:
             logger.warning(f"Error pidiendo sincronización: {exc}")
 

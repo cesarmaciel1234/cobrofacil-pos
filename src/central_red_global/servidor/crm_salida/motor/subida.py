@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import http.cookiejar
+import http.client
 import json
 import logging
 import os
@@ -172,7 +173,21 @@ def _bloques(columnas, filas, semanas_venta: dict | None = None, dias_venta: dic
         for inicio in range(0, len(lote), _TAMANO_PARTE):
             bloques.append(lote[inicio : inicio + _TAMANO_PARTE])
     return bloques or [[]]
-_SECRETOS = ("password", "passwd", "token", "secret", "api_key", "access_token", "refresh_token")
+_SECRETOS = (
+    "password",
+    "passwd",
+    "token",
+    "secret",
+    "api_key",
+    "access_token",
+    "refresh_token",
+    "private_key",
+    "crt",
+    "sign",
+    "afip_token",
+    "mp_token",
+    "authorization",
+)
 _TAMANO_PARTE = 150
 
 COLUMNAS_CLIENTES = (
@@ -438,7 +453,13 @@ def _pedir(abridor, req, timeout: int, intentos: int = 4):
                 time.sleep(3 * (numero + 1))
                 continue
             raise RuntimeError(detalle[:180]) from exc
-        except (urllib.error.URLError, TimeoutError, ConnectionError, OSError) as exc:
+        except (
+            urllib.error.URLError,
+            TimeoutError,
+            ConnectionError,
+            OSError,
+            http.client.HTTPException,
+        ) as exc:
             ultimo = exc
             if numero + 1 < intentos:
                 time.sleep(3 * (numero + 1))
@@ -573,7 +594,10 @@ def subir_base(
                 cuerpo["tenant_id"] = str(empresa_id).strip()
             if sucursal:
                 cuerpo["sucursal"] = sucursal
-            headers = {"Content-Type": "application/json"}
+            headers = {
+                "Content-Type": "application/json",
+                "User-Agent": "CobroFacil-POS-Industrial/2026",
+            }
             if api_key:
                 headers["X-API-Key"] = api_key
             if empresa_id not in (None, ""):
@@ -611,6 +635,12 @@ def subir_base(
             continue
         tablas_ok += 1
         filas += len(todas) + len(bajas)
+        # Checkpoint industrial: consolidar de inmediato el progreso de la tabla completada
+        estado[tabla] = nuevo[tabla]
+        try:
+            guardar_estado(ruta_db, estado)
+        except Exception:
+            pass
     if not errores:
         guardar_estado(ruta_db, nuevo)
     return {"tablas": tablas_ok, "filas": filas, "errores": errores, "delta": True}
@@ -674,6 +704,32 @@ def obtener_sucursales_nube(crm_url: str, opener=None, timeout: int = 30) -> lis
     return []
 
 
+def medir_latencia(crm_url: str, timeout: float = 4.0) -> float | None:
+    """Mide la latencia HTTP de ida y vuelta en milisegundos hacia el servidor CRM."""
+    crm_url = (crm_url or "").strip().rstrip("/")
+    if not crm_url:
+        return None
+    url = f"{crm_url}/api/pos/ping" if "/api" not in crm_url else crm_url
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "CobroFacil-POS-Industrial/2026", "Accept": "*/*"},
+        method="GET",
+    )
+    t0 = time.perf_counter()
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            _ = resp.read(64)
+        latencia_ms = round((time.perf_counter() - t0) * 1000.0, 1)
+        estado_nube.registrar_latencia(latencia_ms)
+        return latencia_ms
+    except urllib.error.HTTPError:
+        latencia_ms = round((time.perf_counter() - t0) * 1000.0, 1)
+        estado_nube.registrar_latencia(latencia_ms)
+        return latencia_ms
+    except Exception:
+        return None
+
+
 def probar_conexion(
     crm_url: str,
     usuario: str,
@@ -691,13 +747,18 @@ def probar_conexion(
         return False, "", "Falta la URL de la nube.", []
     ultimo_error = ""
     for num in range(intentos):
+        t0 = time.perf_counter()
         try:
             if usuario and password:
                 opener, empresa_id = entrar(crm_url, usuario, password, timeout=timeout)
                 sucursales = obtener_sucursales_nube(crm_url, opener, timeout=timeout)
+                ms = round((time.perf_counter() - t0) * 1000.0, 1)
+                estado_nube.registrar_latencia(ms)
                 return True, empresa_id, "Credenciales validadas con éxito.", sucursales
             elif api_key:
                 empresa_id = resolver_empresa(crm_url, api_key, usuario or "empresa", timeout=timeout)
+                ms = round((time.perf_counter() - t0) * 1000.0, 1)
+                estado_nube.registrar_latencia(ms)
                 return True, empresa_id, "API Key validada con éxito.", []
             else:
                 return False, "", "Debe ingresar usuario y contraseña o API Key.", []
@@ -766,7 +827,9 @@ def main() -> int:
     sucursal_id = (os.environ.get("CRM_SUCURSAL_ID") or "").strip()
     sucursal = (os.environ.get("CRM_SUCURSAL") or "").strip()
     opener = None
+    t_inicio = time.time()
     try:
+        estado_nube.registrar_en_progreso("Transmitiendo deltas a Render y Neon DB...")
         if usuario and password:
             opener, empresa_login = entrar(url, usuario, password)
             if empresa_login:
@@ -808,12 +871,14 @@ def main() -> int:
         print(json.dumps({"ok": False, "error": err_msg}, ensure_ascii=False))
         return 1
 
+    duracion = time.time() - t_inicio
     if isinstance(resultado, dict):
         resultado.setdefault("ok", not base["errores"])
         resultado["leidos"] = len(clientes)
         resultado["tablas"] = base["tablas"]
         resultado["filas"] = base["filas"]
         resultado["errores_base"] = base["errores"]
+        resultado["duracion"] = round(duracion, 2)
 
     if not base["errores"]:
         estado_nube.registrar_exito(
@@ -821,7 +886,8 @@ def main() -> int:
             filas=base["filas"],
             empresa=nombre_empresa or usuario,
             sucursal=sucursal,
-            mensaje=f"Lote enviado con éxito ({base['tablas']} tablas, {base['filas']} filas)",
+            mensaje=f"Lote enviado con éxito ({base['tablas']} tablas, {base['filas']} filas en {duracion:.1f}s)",
+            duracion_seg=duracion,
         )
     else:
         estado_nube.registrar_error(f"Errores en {len(base['errores'])} tablas.")

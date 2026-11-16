@@ -91,6 +91,8 @@ jobs:
             'src/carteleria/lanzador_tv/la_cara_web/assets',
             'src/carteleria/creador_png/templates',
             'src/carteleria/creador_png/static',
+            'src/central_red_global/servidor/crm_salida/web/templates',
+            'src/central_red_global/servidor/crm_salida/web/static',
             'Catalogos'
           )
           $missing = @()

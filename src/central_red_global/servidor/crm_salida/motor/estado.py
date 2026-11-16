@@ -98,6 +98,13 @@ class GestorEstado:
                 pass
             return dict(self._estado)
 
+    def registrar_latencia(self, ms: float) -> None:
+        """Registra la latencia en milisegundos hacia el servidor CRM."""
+        with self._lock:
+            self._estado["latencia_ms"] = round(float(ms), 1)
+            self._estado["actualizado_en"] = time.time()
+            self._guardar_disco()
+
     def registrar_sucursal_local(self, sucursal_id: str, sucursal: str) -> None:
         """Actualiza y persiste la sucursal localmente sin requerir conexión a internet."""
         with self._lock:
@@ -112,11 +119,19 @@ class GestorEstado:
         with self._lock:
             self._estado["conectado"] = False
             self._estado["enlace_activo"] = False
+            self._estado["sincronizando"] = True
             self._estado["estado_texto"] = "conectando"
             self._estado["mensaje"] = f"Conectando a {url}..."
             self._estado["url"] = url
             self._estado["empresa"] = empresa
             self._estado["sucursal"] = sucursal
+            self._estado["actualizado_en"] = time.time()
+            self._guardar_disco()
+
+    def registrar_en_progreso(self, mensaje: str = "Sincronizando deltas con la nube...") -> None:
+        with self._lock:
+            self._estado["sincronizando"] = True
+            self._estado["mensaje"] = mensaje
             self._estado["actualizado_en"] = time.time()
             self._guardar_disco()
 
@@ -128,16 +143,20 @@ class GestorEstado:
         empresa: str | None = None,
         sucursal: str | None = None,
         mensaje: str = "Conectado y sincronizado con éxito",
+        duracion_seg: float | None = None,
     ) -> None:
         with self._lock:
             self._estado["conectado"] = True
             self._estado["enlace_activo"] = True
+            self._estado["sincronizando"] = False
             self._estado["estado_texto"] = "conectado"
             self._estado["mensaje"] = mensaje
             if empresa:
                 self._estado["empresa"] = empresa
             if sucursal:
                 self._estado["sucursal"] = sucursal
+            if duracion_seg is not None:
+                self._estado["duracion_segundos"] = round(duracion_seg, 2)
             if tablas is not None or filas is not None:
                 marca = time.strftime("%Y-%m-%d %H:%M:%S")
                 self._estado["ultimo_envio"] = marca
@@ -153,6 +172,7 @@ class GestorEstado:
         with self._lock:
             self._estado["conectado"] = False
             self._estado["enlace_activo"] = False
+            self._estado["sincronizando"] = False
             self._estado["estado_texto"] = "error"
             self._estado["ultimo_error"] = error
             self._estado["mensaje"] = f"Error de conexión: {error}"

@@ -33,6 +33,8 @@ _guardia = threading.Lock()
 _hilo: threading.Thread | None = None
 _parar = threading.Event()
 _despertar = threading.Event()
+_forzar_envio = False
+_forzar_lock = threading.Lock()
 _ultimo_aviso = ""
 
 
@@ -107,7 +109,7 @@ def _marcar_origen() -> str:
     return origen
 
 
-def lanzar(credenciales: dict) -> None:
+def lanzar(credenciales: dict, forzar: bool = False) -> None:
     """Otro proceso lee la base y hace el POST. La clave no va en el comando."""
     from src.central_red_global.servidor.crm_salida.motor import huella, leer_clientes, manifiesto
 
@@ -145,6 +147,20 @@ def lanzar(credenciales: dict) -> None:
             logger.info("CRM  la nube ya tiene este libro. Desde ahora solo salen los cambios.")
         else:
             logger.info("CRM  la base sigue igual. No se reenvía.")
+        if forzar:
+            try:
+                from src.central_red_global.servidor.crm_salida.motor.estado import estado_nube
+
+                est = estado_nube.obtener_estado()
+                estado_nube.registrar_exito(
+                    tablas=est.get("tablas_totales", 0),
+                    filas=est.get("filas_totales", 0),
+                    empresa=credenciales.get("empresa"),
+                    sucursal=credenciales.get("sucursal"),
+                    mensaje="Sincronizado: Base al día (sin cambios pendientes)",
+                )
+            except Exception:
+                pass
         return
     try:
         with open(ruta_cuando, encoding="utf-8") as archivo:
@@ -152,7 +168,7 @@ def lanzar(credenciales: dict) -> None:
     except (OSError, ValueError):
         ultimo = 0.0
     falta = MINIMO_ENTRE_ENVIOS_SEG - (time.time() - ultimo)
-    if ultimo and falta > 0:
+    if not forzar and ultimo and falta > 0:
         logger.info("CRM  hay cambios. El turno gratis abre en %s min.", int(falta // 60) + 1)
         return
 
@@ -228,8 +244,12 @@ def _rol() -> str:
     return oficio()
 
 
-def _vuelta() -> None:
-    global _ultimo_aviso
+_fallos_consecutivos: int = 0
+_ultimo_fallo: float = 0.0
+
+
+def _vuelta(forzar: bool = False) -> None:
+    global _ultimo_aviso, _fallos_consecutivos, _ultimo_fallo
     try:
         rol = _rol()
     except Exception as exc:
@@ -238,7 +258,7 @@ def _vuelta() -> None:
             return
         rol = "esclava"
     credenciales = leer_credenciales()
-    resultado = turno(rol, credenciales, lanzar)
+    resultado = turno(rol, credenciales, lambda creds: lanzar(creds, forzar=forzar))
     if resultado == "esclava":
         if _ultimo_aviso != "esclava":
             logger.info("CRM  esta PC es esclava. No envía. La maestra manda el dato centralizado.")
@@ -250,8 +270,15 @@ def _vuelta() -> None:
             _ultimo_aviso = "sin_datos"
         return
     _ultimo_aviso = "maestra"
-    if resultado == "fallo":
-        logger.error("CRM  esta vuelta no salió. La próxima vuelve a intentar. El servidor sigue.")
+    if resultado == "enviado":
+        _fallos_consecutivos = 0
+    elif resultado == "fallo":
+        _fallos_consecutivos += 1
+        _ultimo_fallo = time.time()
+        logger.error(
+            "CRM  esta vuelta no salió (fallos consecutivos: %s). La próxima vuelve a intentar. El servidor sigue.",
+            _fallos_consecutivos,
+        )
 
 
 def _ciclo() -> None:
@@ -263,8 +290,14 @@ def _ciclo() -> None:
         if _parar.is_set():
             break
         pausa = PAUSA_VUELTA_SEG
+        global _forzar_envio
+        con_fuerza = False
+        with _forzar_lock:
+            if _forzar_envio:
+                con_fuerza = True
+                _forzar_envio = False
         try:
-            _vuelta()
+            _vuelta(forzar=con_fuerza)
         except Exception as exc:
             logger.error("CRM  el módulo falló una vuelta y el servidor sigue: %s", exc)
 
@@ -280,8 +313,38 @@ def prender() -> None:
         _hilo.start()
 
 
-def pedir_vuelta() -> None:
-    """La ventana guardó la empresa. La próxima vuelta no espera los dos minutos."""
+_timer_venta: threading.Timer | None = None
+_timer_venta_lock = threading.Lock()
+
+
+def notificar_venta(retraso_seg: float = 15.0) -> None:
+    """Una caja acaba de cobrar una venta. Dispara una sincronización debounced.
+    Si caen varias ventas seguidas (pico de caja), espera a que se calme 15 segundos
+    para empaquetar todas las ventas juntas en un solo lote rápido.
+    Aplica backoff adaptativo si la nube se encuentra temporalmente offline."""
+    global _timer_venta, _fallos_consecutivos
+    with _timer_venta_lock:
+        if _timer_venta is not None:
+            try:
+                _timer_venta.cancel()
+            except Exception:
+                pass
+        espera = retraso_seg
+        if _fallos_consecutivos >= 3:
+            # Backoff adaptativo si la nube está caída: no sobrecargar el sistema local
+            espera = min(120.0, retraso_seg * (2 ** min(4, _fallos_consecutivos - 2)))
+        _timer_venta = threading.Timer(espera, lambda: pedir_vuelta(forzar=True))
+        _timer_venta.daemon = True
+        _timer_venta.start()
+
+
+def pedir_vuelta(forzar: bool = False) -> None:
+    """La ventana guardó la empresa o solicitó sync manual."""
+    global _forzar_envio, _fallos_consecutivos
+    if forzar:
+        with _forzar_lock:
+            _forzar_envio = True
+            _fallos_consecutivos = 0
     _despertar.set()
 
 

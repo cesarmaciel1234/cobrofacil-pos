@@ -83,7 +83,8 @@ Servidor de Tienda (bandeja.py / headless.py)
    │       │       ├── Sanitiza claves secretas (None)
    │       │       ├── Manifiesto SHA-256 (omite envío si la base no cambió)
    │       │       ├── HTTP POST -> el día de venta sale entero; el resto, en lotes de 150
-   │       │       └── Actualiza estado_nube (exito o error)
+   │       │       ├── Checkpointing progresivo por tabla (persistencia inmediata tras cada tabla ok)
+   │       │       └── Actualiza estado_nube (sincronizando, exito o error)
    │       │
    │       └──> bajada.py (recepción de datos de la nube)
    │               ├── GET /api/pos/nube/novedades
@@ -97,9 +98,11 @@ Servidor de Tienda (bandeja.py / headless.py)
    * La base local se abre con `file:{ruta}?mode=ro` (URI SQLite). Ninguna operación de réplica bloquea escrituras de MariaDB ni cajeros.
 3. **Manejo de Cold Starts en Render:**
    * La función `_pedir` amortigua los arranques en frío (HTTP 502/503/504) con reintentos progresivos de 3s, 6s, 9s.
-4. **Arquitectura Bidireccional:**
-   * `motor/subida.py`: Réplica ascendente de ventas, clientes y tablas base.
+4. **Arquitectura Bidireccional e Industrial:**
+   * `motor/subida.py`: Réplica ascendente de ventas, clientes y tablas base con **checkpointing progresivo por tabla** y medición de latencia HTTP (`medir_latencia`).
    * `motor/bajada.py`: Infraestructura lista para la recepción de precios y clientes desde la nube a través de staging protegido.
+   * `vigilante.py`: Event-driven debounce sync (`notificar_venta`) disparado tras cada cobro en caja con circuit breaker y backoff adaptativo.
+   * `tablero.py`: Chip visual en tiempo real (`self.chip_nube`) en el panel maestro con estado, filas sincronizadas y latencia en milisegundos.
 
 ---
 
@@ -109,3 +112,4 @@ Servidor de Tienda (bandeja.py / headless.py)
 2. Mantener `motor.py` en la raíz de la rama exportando las mismas funciones que usaban `main.py` y `tests/test_crm_cartera.py`.
 3. No quitar la validación obligatoria del nombre de la sucursal.
 4. Mantener siempre la apertura de SQLite en modo solo lectura (`mode=ro`).
+5. No tocar `src/utils/qt_dpi.py` (escalado global).

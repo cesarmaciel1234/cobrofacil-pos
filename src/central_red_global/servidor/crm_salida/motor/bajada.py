@@ -49,7 +49,10 @@ def consultar_novedades_nube(
     if query:
         url = f"{url}?{query}"
 
-    headers = {"Content-Type": "application/json"}
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "CobroFacil-POS-Industrial/2026",
+    }
     if api_key:
         headers["X-API-Key"] = api_key
     if empresa_id not in (None, ""):

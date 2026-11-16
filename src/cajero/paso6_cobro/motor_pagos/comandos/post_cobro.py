@@ -72,3 +72,9 @@ def post_cobro(datos, id_v, resultado_venta):
         encolar_venta(id_v, resultado_venta, datos.get("items_carrito") or [])
     except Exception as e:
         logger.warning("No se encolo la venta %s en diario externo: %s", id_v, e)
+    try:
+        from src.central_red_global.servidor.crm_salida.vigilante import notificar_venta
+
+        notificar_venta()
+    except Exception:
+        pass

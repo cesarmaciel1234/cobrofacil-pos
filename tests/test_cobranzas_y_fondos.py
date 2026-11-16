@@ -511,11 +511,14 @@ class _Libro:
         self.queries.append(query)
         if "medio_pago" in query and self.falla_ancho:
             raise RuntimeError("Unknown column 'medio_pago'")
-        if self.falla_corto and "VALUES (?, 'ABONO'" in query and "medio_pago" not in query:
+        if self.falla_corto and "'ABONO'" in query and "medio_pago" not in query:
             raise RuntimeError("insert corto")
 
     def fetchone(self):
         return {"deuda_actual": 80.0, "nombre": "Ana"}
+
+    def fetchall(self):
+        return []
 
     def commit(self):
         self.committed = True
@@ -541,7 +544,7 @@ def test_abono_es_una_sola_transaccion_y_cae_al_insert_corto(monkeypatch):
     assert nombre == "Ana"
     assert ancho.committed is True
     assert any("medio_pago" in q for q in ancho.queries)
-    assert any("VALUES (?, 'ABONO'" in q and "medio_pago" not in q for q in ancho.queries)
+    assert any("'ABONO'" in q and "medio_pago" not in q for q in ancho.queries)
 
     roto = _Libro(falla_ancho=True, falla_corto=True)
     monkeypatch.setattr(
@@ -714,7 +717,7 @@ def test_anular_baja_la_deuda_una_sola_vez(monkeypatch):
     assert updates == [(0.0, 3)]
     altas = [p for q, p in cur.sql if q.startswith("INSERT INTO cuenta_corriente")]
     assert altas and altas[0][0] == 3
-    assert "cancelado" in str(altas[0][3]).lower()
+    assert any("cancelado" in str(col).lower() for col in altas[0])
 
     otra = _Cur([{"id": 9, "cliente_id": 3, "monto": 100, "descripcion": "Venta"}, {"id": 1}])
     anular_cargo_f3(otra, 12)

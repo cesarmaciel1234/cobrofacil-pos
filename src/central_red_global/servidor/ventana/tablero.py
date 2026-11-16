@@ -68,12 +68,14 @@ class Tablero(QWidget):
         self.chip_local = self._chip("punpro.db …")
         self.chip_replica = self._chip("réplica …")
         self.chip_auditoria = self._chip("auditoría …")
+        self.chip_nube = self._chip("☁️ nube …")
         for chip in (
             self.chip_tickets,
             self.chip_cambios,
             self.chip_local,
             self.chip_replica,
             self.chip_auditoria,
+            self.chip_nube,
         ):
             chips.addWidget(chip)
         chips.addStretch()
@@ -326,4 +328,50 @@ class Tablero(QWidget):
             f"réplica  {n_replica} tablas" if n_replica else "réplica ausente"
         )
         self.chip_auditoria.setText(f"{n_auditoria} auditorías")
+        self._pintar_chip_nube()
         self._pintar_red(red if isinstance(red, dict) else {})
+
+    def _pintar_chip_nube(self) -> None:
+        try:
+            from src.central_red_global.servidor.crm_salida.motor.estado import estado_nube
+
+            est = estado_nube.obtener_estado()
+        except Exception:
+            est = {}
+
+        sincronizando = bool(est.get("sincronizando"))
+        activo = bool(est.get("enlace_activo") or est.get("conectado"))
+        error = est.get("ultimo_error")
+        filas = int(est.get("filas_enviadas") or est.get("filas_totales") or 0)
+        lat = est.get("latencia_ms")
+
+        if sincronizando:
+            self.chip_nube.setText("☁️ nube: sincronizando…")
+            self.chip_nube.setStyleSheet(
+                "font-size: 11px; font-weight: 700; color: #38BDF8; "
+                "background: #082F49; border: 1px solid #0284C7; "
+                "border-radius: 8px; padding: 4px 8px;"
+            )
+        elif activo:
+            filas_txt = f"{filas // 1000}k" if filas >= 1000 else str(filas)
+            lat_txt = f" · {int(lat)}ms" if lat is not None else ""
+            self.chip_nube.setText(f"☁️ nube: al día ({filas_txt} filas{lat_txt})")
+            self.chip_nube.setStyleSheet(
+                "font-size: 11px; font-weight: 700; color: #86EFAC; "
+                "background: #052E16; border: 1px solid #166534; "
+                "border-radius: 8px; padding: 4px 8px;"
+            )
+        elif error:
+            self.chip_nube.setText("☁️ nube: error enlace")
+            self.chip_nube.setStyleSheet(
+                "font-size: 11px; font-weight: 700; color: #FCA5A5; "
+                "background: #450A0A; border: 1px solid #991B1B; "
+                "border-radius: 8px; padding: 4px 8px;"
+            )
+        else:
+            self.chip_nube.setText("☁️ nube: desconectado")
+            self.chip_nube.setStyleSheet(
+                "font-size: 11px; font-weight: 700; color: #94A3B8; "
+                "background: #1E293B; border: 1px solid #334155; "
+                "border-radius: 8px; padding: 4px 8px;"
+            )

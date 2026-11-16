@@ -18,11 +18,12 @@ Opera en aislamiento absoluto respecto al hilo de ventas y al Servidor MariaDB. 
 * `huella(clientes: list[dict], marca: str) -> str`: Genera un hash SHA-256 para detectar si la cartera de clientes sufrió alteraciones.
 * `manifiesto(ruta_db: str) -> str`: Genera el hash global SHA-256 de todas las tablas exportables de la base de datos local.
 * `leer_base(ruta_db: str)`: Generador iterativo que lee tabla por tabla en SQLite `mode=ro`, sanitizando y anulando columnas con nombres o valores sensibles (`password`, `token`, `secret`, `api_key`).
-* `_pedir(abridor, req, timeout, intentos=4)`: Wrapper HTTP con reintentos para soportar los cold starts de Render (errores 502, 503, 504) con backoff exponencial suave.
-* `subir_base(...) -> dict`: Al enlazar, manda la venta del día entera y después el resto en lotes de 150 filas hacia `/api/pos/base/tabla`.
+* `_pedir(abridor, req, timeout, intentos=4)`: Wrapper HTTP industrial con reintentos para soportar los cold starts de Render (errores 502, 503, 504, RemoteDisconnected, HTTPException) con backoff exponencial suave y User-Agent identificado.
+* `subir_base(...) -> dict`: Al enlazar, manda la venta del día entera y después el resto en lotes de 150 filas hacia `/api/pos/base/tabla`. Aplica checkpointing progresivo por tabla: guarda el avance en disco apenas cada tabla finaliza con éxito, evitando retransmisiones redundantes ante microcortes.
 * `resolver_empresa(crm_url, api_key, nombre) -> str`: Convierte el slug/nombre comercial de la empresa en su ID numérico en la nube.
 * `entrar(crm_url, usuario, password) -> tuple[opener, empresa_id]`: Autentica al usuario contra `/auth/login` y entrega la cookie jar de sesión.
-* `probar_conexion(crm_url, usuario, password, api_key) -> tuple[bool, str, str]`: Prueba rápida de conectividad y credenciales utilizada por la mini web.
+* `probar_conexion(crm_url, usuario, password, api_key) -> tuple[bool, str, str]`: Prueba rápida de conectividad y credenciales utilizada por la mini web y el panel nativo, midiendo la latencia HTTP hacia Render.
+* `medir_latencia(crm_url, timeout=4.0) -> float | None`: Mide la latencia de ida y vuelta (round-trip) en milisegundos hacia la nube y la reporta en telemetría.
 * `enviar(crm_url, api_key, clientes, ...) -> dict`: Realiza el POST del lote de clientes hacia `/api/pos/clientes/lote`.
 * `main() -> int`: Punto de entrada CLI para la ejecución como subproceso desprendido (`--crm-cartera`).
 
@@ -35,9 +36,11 @@ Opera en aislamiento absoluto respecto al hilo de ventas y al Servidor MariaDB. 
 ### En `estado.py`:
 * `GestorEstado.get() -> GestorEstado`: Singleton seguro para hilos que centraliza la telemetría.
 * `obtener_estado() -> dict`: Devuelve el diccionario de estado actual con información de conectividad, empresa, sucursal y última sincronización.
+* `registrar_latencia(ms: float)`: Registra la latencia medida en milisegundos hacia el servidor CRM.
 * `registrar_conectando(url, empresa, sucursal)`: Pasa el estado a `conectando`.
-* `registrar_exito(tablas, filas, empresa, sucursal, mensaje)`: Marca `conectado=True` y almacena fecha y contadores.
-* `registrar_error(error)`: Marca `conectado=False`, estado `error` y almacena el motivo para el botón "Reconectar".
+* `registrar_en_progreso(mensaje)`: Marca `sincronizando=True` para informar a la UI en vivo que los deltas están en vuelo.
+* `registrar_exito(tablas, filas, empresa, sucursal, mensaje, duracion_seg)`: Marca `conectado=True`, `sincronizando=False` y almacena fecha, duración y contadores.
+* `registrar_error(error)`: Marca `conectado=False`, `sincronizando=False`, estado `error` y almacena el motivo para el botón "Reconectar".
 * `registrar_bajada(detalle)`: Actualiza fecha de la última bajada de datos.
 
 ---
