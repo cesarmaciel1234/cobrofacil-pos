@@ -230,6 +230,13 @@ class Grabar:
         if ticket_id is None:
             logger.error("Sin el último ticket no se graba el diario. La copia anterior queda.")
             return False
+        if ticket_id == 0 and any(
+            os.path.isfile(ruta) and os.path.getsize(ruta) > 50_000 for ruta in targets
+        ):
+            logger.error(
+                "Esta base no tiene tickets y ya hay un diario. La copia anterior queda."
+            )
+            return False
         try:
             base_dir = get_base_path()
             mysqldump_exe = os.path.join(base_dir, "mariadb_server", "bin", "mysqldump.exe")

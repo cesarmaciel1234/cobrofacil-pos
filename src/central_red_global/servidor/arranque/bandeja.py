@@ -145,11 +145,11 @@ def run_store_server_app(app, background: bool = False) -> int:
                     from src.services.mariadb_controller import mariadb_controller
 
                     if mariadb_controller.start_server():
-                        from src.base_de_datos.database import db
-                        if getattr(db, "db_engine_type", "sqlite") == "sqlite":
-                            db.reconectar_mariadb("127.0.0.1")
-                            db._create_tables()
-                            db._migrate_db()
+                        from src.base_de_datos.database import db_manager
+                        if getattr(db_manager, "db_engine_type", "sqlite") == "sqlite":
+                            db_manager.reconectar_mariadb("127.0.0.1")
+                            db_manager._create_tables()
+                            db_manager._migrate_db()
                 except Exception as e:
                     logger.error(f"Watchdog MariaDB: {e}")
             try:

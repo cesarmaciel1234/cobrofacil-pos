@@ -10,5 +10,5 @@ Coordina el levantamiento del proceso `--server`, el healthcheck (`proceso.py`) 
 - `_watchdog` ejecuta sus chequeos de MariaDB y presencia LAN en un **hilo daemon separado** (`_watchdog_worker`) y emite por señal Qt (`_WatchdogSignals`) para no congelar la interfaz.
 
 ## Qué no debe cambiar una mejora futura
-- Mantener la invocación a `db.reconectar_mariadb()`, `db._create_tables()` y `db._migrate_db()` cuando el Watchdog enciende MariaDB tras un arranque diferido (`arrancar_mysqld=False`).
+- Mantener la invocación a `db_manager.reconectar_mariadb()`, `db_manager._create_tables()` y `db_manager._migrate_db()` cuando el Watchdog enciende MariaDB tras un arranque diferido (`arrancar_mysqld=False`). El módulo exporta `db_manager`, no `db`.
 - Mantener la cuarentena segura de `MariaDBController` (`corrupt_backup_*`) sin borrar datos automáticamente.

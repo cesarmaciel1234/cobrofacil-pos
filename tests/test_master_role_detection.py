@@ -21,6 +21,25 @@ def test_ip_de_esta_pc_no_se_considera_maestra_remota(monkeypatch):
     assert master_presence.es_pc_maestra_local() is True
 
 
+def test_ip_guardada_de_otra_pc_no_deja_anunciar_maestra(monkeypatch):
+    from src.config import config
+
+    values = {
+        "db_host": "localhost",
+        "is_master": True,
+        "carteleria_is_slave": False,
+        "preferred_master_ip": "192.168.0.8",
+        "carteleria_master_ip": "192.168.0.8",
+    }
+    monkeypatch.setattr(config, "get", lambda key, default=None: values.get(key, default))
+    monkeypatch.setattr(
+        "src.central_red_global.servidor.rol.ip.es_ip_de_esta_pc",
+        lambda _host: False,
+    )
+
+    assert master_presence.es_pc_maestra_local() is False
+
+
 def test_ip_de_otra_pc_sigue_siendo_esclava(monkeypatch):
     from src.config import config
 

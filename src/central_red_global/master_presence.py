@@ -28,9 +28,12 @@ def es_pc_maestra_local() -> bool:
             return False
         if config.get("carteleria_is_slave"):
             return False
-        pref = str(config.get("preferred_master_ip", "") or "").strip().lower()
-        if pref and pref not in ("localhost", "127.0.0.1") and config.get("is_master") is False:
-            return False
+        pref = str(config.get("preferred_master_ip", "") or config.get("carteleria_master_ip", "") or "").strip().lower()
+        if pref and pref not in ("localhost", "127.0.0.1"):
+            from src.central_red_global.servidor.rol.ip import es_ip_de_esta_pc
+
+            if not es_ip_de_esta_pc(pref):
+                return False
         return True
     except Exception as e:
         logger.debug(f"master_presence: no se pudo evaluar rol maestra: {e}")
