@@ -86,3 +86,50 @@ def test_evaluar_disponibilidad_id():
     assert "disponible" in panel.lbl_sucursal_info.text().lower()
 
     panel.deleteLater()
+
+
+def test_auto_pc_y_siguiente_id_calculo():
+    from src.central_red_global.servidor.ventana.panel_nativo import calcular_siguiente_id
+
+    # Sin sucursales previas
+    assert calcular_siguiente_id([]) == "1"
+    assert calcular_siguiente_id(None) == "1"
+
+    # Con sucursal 1 ocupada -> siguiente es 2
+    assert calcular_siguiente_id([{"id": 1, "nombre": "Maciel"}]) == "2"
+
+    # Con sucursales 1, 2, 5 -> siguiente es 6
+    assert calcular_siguiente_id([
+        {"id": 1, "nombre": "Maciel"},
+        {"id": 2, "nombre": "Sucursal 2"},
+        {"id": 5, "nombre": "Sucursal 5"},
+    ]) == "6"
+
+
+def test_auto_pc_boton_agrega_nombre_maquina_y_siguiente_id(monkeypatch):
+    from src.config import config
+    from src.central_red_global.servidor.ventana.panel_nativo import PanelNativoCRM
+
+    suc_ant = config.get("crm_sucursal")
+    suc_id_ant = config.get("crm_sucursal_id")
+    try:
+        monkeypatch.setattr(
+            "src.central_red_global.servidor.ventana.panel_nativo.nombre_de_esta_pc",
+            lambda: "CAJA-02",
+        )
+        panel = PanelNativoCRM()
+        panel._sucursales_nube = [{"id": 1, "nombre": "Maciel"}]
+        panel.txt_sucursal.setText("Maciel")
+        panel.txt_sucursal_id.setText("1")
+
+        # Al presionar el botón de auto PC y siguiente ID
+        panel.btn_auto_pc.click()
+
+        assert panel.txt_sucursal.text() == "Maciel - CAJA-02"
+        assert panel.txt_sucursal_id.text() == "2"
+        panel.deleteLater()
+    finally:
+        if suc_ant is not None:
+            config.set("crm_sucursal", suc_ant)
+        if suc_id_ant is not None:
+            config.set("crm_sucursal_id", suc_id_ant)

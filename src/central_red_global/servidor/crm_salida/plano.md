@@ -57,8 +57,8 @@ src/central_red_global/servidor/crm_salida/
      * **URL del CRM:** Por defecto `https://crm-frigorifico.onrender.com`.
      * **Empresa / Usuario:** Nombre comercial con el que se identifica la cuenta (ej. `maciel`).
      * **Contraseña:** Campo protegido con botón de alternar visibilidad.
-     * **ID de Sucursal:** Número identificador (ej. `1`).
-     * **Nombre de Sucursal [OBLIGATORIO]:** Se toma solo, es el nombre de esta PC. Si ese nombre ya está en la nube y tiene número, el enlace usa ese número. Un nombre que no está no se enlaza con el número de otra.
+     * **ID de Sucursal:** Número identificador (ej. `1`). Se calcula y asigna automáticamente el siguiente ID numérico disponible si el actual ya está ocupado en la nube.
+     * **Nombre de Sucursal [OBLIGATORIO Y AUTO-NOMBRADO]:** El servidor toma automáticamente el nombre de Windows de la máquina (`socket.gethostname()`), lo anexa al nombre de la sucursal (ej: `Maciel - PC-LOCAL`) y le asigna el siguiente ID disponible en la nube. Incluye botón interactivo `✨ Auto PC & ID` para auto-completar en un solo clic sin colisionar con Casa Central ni otras cajas.
    * **Dashboard de Telemetría Premium (Grilla 3x2):**
      * `🎫 TICKETS ENVIADOS`: Conteo total de tickets y ventas enviadas a la nube.
      * `👥 CLIENTES EN CARTERA`: Cartera de clientes fidelizados sincronizados con el CRM.

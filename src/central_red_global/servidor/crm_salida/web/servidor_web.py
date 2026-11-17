@@ -256,29 +256,26 @@ class MiniWebHandler(BaseHTTPRequestHandler):
                 400,
             )
 
-        # El nombre de esta PC, si ya está en la nube, devuelve el número que ya tiene.
+        # El servidor agarra el nombre de la máquina y le agrega el nombre y el ID siguiente disponible
+        pc = nombre_de_esta_pc()
         nombre_sucursal = sucursal
+        if pc and pc.casefold() not in sucursal.casefold():
+            nombre_sucursal = f"{sucursal} - {pc}" if sucursal else pc
+
         if sucursales:
-            conocido = id_para_esta_pc(sucursales, sucursal)
-            if not conocido:
-                nombres = ", ".join(
-                    f"{s.get('nombre')} (#{s.get('id')})"
+            conocido = id_para_esta_pc(sucursales, nombre_sucursal) or id_para_esta_pc(sucursales, sucursal)
+            if conocido:
+                sucursal_id, nombre_sucursal = conocido
+            else:
+                ids_ocupados = {
+                    int(str(s.get("id")))
                     for s in sucursales
-                    if s.get("nombre") and s.get("id") not in (None, "")
-                )
-                pc = nombre_de_esta_pc() or sucursal
-                detalle = (
-                    f"Esta PC se llama {pc}. En la nube ese nombre no está"
-                    + (f". Las que ya tienen número: {nombres}." if nombres else ".")
-                    + " No enlacé con otro nombre."
-                )
-                estado_nube.registrar_error(detalle)
-                return self._responder_json({"ok": False, "error": detalle, "sucursales": sucursales}, 400)
-            sucursal_id, nombre_sucursal = conocido
+                    if s.get("id") is not None and str(s.get("id")).strip().isdigit()
+                }
+                if not sucursal_id or not sucursal_id.isdigit() or int(sucursal_id) in ids_ocupados:
+                    sucursal_id = str(max(ids_ocupados) + 1) if ids_ocupados else "1"
         elif not sucursal_id:
-            detalle = "No pude ver las sucursales de la nube, así que no asigné un número."
-            estado_nube.registrar_error(detalle)
-            return self._responder_json({"ok": False, "error": detalle}, 400)
+            sucursal_id = "1"
 
         # Guardar en config local de la tienda
         try:

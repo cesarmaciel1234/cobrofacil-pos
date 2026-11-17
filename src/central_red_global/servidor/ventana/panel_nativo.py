@@ -9,6 +9,7 @@ en tiempo real y validación obligatoria de sucursal.
 from __future__ import annotations
 
 import logging
+import socket
 import threading
 from typing import Any
 
@@ -32,11 +33,34 @@ from src.utils.letra import fuente_nombre, fuente_numero
 logger = logging.getLogger("servidor.ventana.panel_nativo")
 
 
+def nombre_de_esta_pc() -> str:
+    """Retorna el nombre Windows / hostname de esta máquina."""
+    try:
+        return str(socket.gethostname() or "").strip()
+    except Exception:
+        return ""
+
+
+def calcular_siguiente_id(sucursales: list[dict] | None, id_actual: str = "") -> str:
+    """Calcula el siguiente ID numérico disponible basándose en las sucursales existentes en la nube."""
+    if not sucursales:
+        return id_actual if (id_actual and id_actual.strip().isdigit() and id_actual.strip() != "0") else "1"
+    ids_ocupados = set()
+    for s in sucursales:
+        sid = s.get("id")
+        if sid is not None and str(sid).strip().isdigit():
+            ids_ocupados.add(int(str(sid).strip()))
+    if not ids_ocupados:
+        return id_actual if (id_actual and id_actual.strip().isdigit() and id_actual.strip() != "0") else "1"
+    return str(max(ids_ocupados) + 1)
+
+
 class _HilosConexion(QObject):
     """Manejo seguro de señales entre el hilo de red y la interfaz Qt."""
 
     sig_terminado = pyqtSignal(bool, str, str, str)  # ok, titulo, detalle, empresa_id
     sig_sucursales = pyqtSignal(list)
+    sig_actualizar_sucursal = pyqtSignal(str, str)  # suc_id, nombre_sucursal
 
 
 def _estilo_panel() -> str:
@@ -265,6 +289,7 @@ class PanelNativoCRM(QWidget):
         self._senales = _HilosConexion()
         self._senales.sig_terminado.connect(self._al_terminar_conexion)
         self._senales.sig_sucursales.connect(self._al_recibir_sucursales)
+        self._senales.sig_actualizar_sucursal.connect(self._al_actualizar_sucursal_ui)
         self._sucursales_nube: list[dict] = []
         self._en_proceso = False
         self._modo_edicion = False
@@ -451,6 +476,17 @@ class PanelNativoCRM(QWidget):
         lbl_suc_nom_box.addWidget(lbl_suc_oblig)
         lbl_suc_nom_box.addStretch(1)
 
+        self.btn_auto_pc = QPushButton("✨ Auto PC & ID")
+        self.btn_auto_pc.setObjectName("BtnAutoPc")
+        self.btn_auto_pc.setToolTip("Asigna automáticamente el nombre de esta máquina y el siguiente ID disponible")
+        self.btn_auto_pc.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_auto_pc.setStyleSheet(
+            "background-color: #1E293B; color: #38BDF8; font-size: 11px; font-weight: 700; "
+            "border: 1px solid #0284C7; border-radius: 4px; padding: 2px 8px;"
+        )
+        self.btn_auto_pc.clicked.connect(self._aplicar_auto_pc_y_siguiente_id)
+        lbl_suc_nom_box.addWidget(self.btn_auto_pc)
+
         self.txt_sucursal = QLineEdit()
         self.txt_sucursal.setPlaceholderText("Ej: Casa Central / alfaro 1954")
         caja_nom.addLayout(lbl_suc_nom_box)
@@ -612,6 +648,7 @@ class PanelNativoCRM(QWidget):
         self.txt_sucursal_id.setReadOnly(bloqueado)
         self.txt_sucursal.setReadOnly(bloqueado)
         self.btn_ojo.setEnabled(not bloqueado)
+        self.btn_auto_pc.setEnabled(True)
 
         if bloqueado:
             self.lbl_estado_bloqueo.setText("🔒 Configuración Protegida (Toca ✏️ para editar)")
@@ -846,7 +883,11 @@ class PanelNativoCRM(QWidget):
 
         def _tarea_fondo() -> None:
             ok, empresa_id, detalle, sucursales = probar_conexion(url, empresa, password)
+            pc = nombre_de_esta_pc()
             nombre_sucursal = sucursal
+            if pc and pc.casefold() not in sucursal.casefold():
+                nombre_sucursal = f"{sucursal} - {pc}" if sucursal else pc
+
             suc_id = sucursal_id
             if sucursales:
                 self._senales.sig_sucursales.emit(sucursales)
@@ -856,12 +897,24 @@ class PanelNativoCRM(QWidget):
                         (
                             s
                             for s in sucursales
-                            if str(s.get("nombre", "")).strip().lower() == sucursal.strip().lower()
+                            if str(s.get("nombre", "")).strip().casefold() == nombre_sucursal.casefold()
+                            or (pc and pc.casefold() in str(s.get("nombre", "")).casefold())
                         ),
                         None,
                     )
                     if coincidente:
                         suc_id = str(coincidente.get("id", sucursal_id))
+                        nombre_sucursal = str(coincidente.get("nombre") or nombre_sucursal)
+                    else:
+                        ids_ocupados = {
+                            int(str(s.get("id")))
+                            for s in sucursales
+                            if str(s.get("id", "")).isdigit()
+                        }
+                        if not suc_id or not suc_id.isdigit() or int(suc_id) in ids_ocupados:
+                            suc_id = str(max(ids_ocupados) + 1) if ids_ocupados else "1"
+
+                self._senales.sig_actualizar_sucursal.emit(suc_id, nombre_sucursal)
 
                 try:
                     from src.config import config
@@ -935,6 +988,31 @@ class PanelNativoCRM(QWidget):
         t = threading.Thread(target=_fondo, daemon=True)
         t.start()
 
+    def _al_actualizar_sucursal_ui(self, suc_id: str, nombre_sucursal: str) -> None:
+        """Actualiza los campos de texto en el hilo principal de Qt tras el enlace."""
+        self.txt_sucursal_id.setText(str(suc_id))
+        self.txt_sucursal.setText(str(nombre_sucursal))
+        self._evaluar_disponibilidad_id()
+
+    def _aplicar_auto_pc_y_siguiente_id(self) -> None:
+        """Asigna de inmediato el nombre de la máquina y el siguiente ID disponible."""
+        if not self._modo_edicion:
+            self._modo_edicion = True
+            self._aplicar_bloqueo_edicion()
+
+        pc = nombre_de_esta_pc()
+        cur_nom = self.txt_sucursal.text().strip()
+        if pc and pc.casefold() not in cur_nom.casefold():
+            nuevo_nom = f"{cur_nom} - {pc}" if cur_nom else pc
+        else:
+            nuevo_nom = cur_nom or pc
+
+        sig_id = calcular_siguiente_id(self._sucursales_nube, self.txt_sucursal_id.text().strip())
+        self.txt_sucursal.setText(nuevo_nom)
+        self.txt_sucursal_id.setText(sig_id)
+        self._guardar_config_local_silencioso()
+        self._evaluar_disponibilidad_id()
+
     def _al_recibir_sucursales(self, sucursales: list[dict]) -> None:
         self._sucursales_nube = sucursales
         self._evaluar_disponibilidad_id()
@@ -942,27 +1020,36 @@ class PanelNativoCRM(QWidget):
     def _evaluar_disponibilidad_id(self) -> None:
         cur_id = self.txt_sucursal_id.text().strip()
         nom_actual = self.txt_sucursal.text().strip()
+        pc = nombre_de_esta_pc()
         if not cur_id:
             self.lbl_sucursal_info.setText("")
             return
 
         if not self._sucursales_nube:
-            self.lbl_sucursal_info.setText("💡 ID asignado a este local. Si es el segundo local, use ID 2.")
+            msg = f"💡 PC: '{pc}'. ID asignado a este local. Si es el segundo local, use ID 2."
+            self.lbl_sucursal_info.setText(msg)
             self.lbl_sucursal_info.setStyleSheet("color: #94A3B8; font-size: 11px;")
             return
 
+        sig_id = calcular_siguiente_id(self._sucursales_nube, cur_id)
         coincidente = next((s for s in self._sucursales_nube if str(s.get("id")) == cur_id), None)
         if coincidente:
             nom_nube = str(coincidente.get("nombre") or "").strip()
-            if nom_actual.lower() == nom_nube.lower():
-                self.lbl_sucursal_info.setText(f"🟢 ID #{cur_id} asignado a '{nom_nube}' en la nube.")
+            if nom_actual.lower() == nom_nube.lower() or (pc and pc.lower() in nom_nube.lower()):
+                self.lbl_sucursal_info.setText(f"🟢 ID #{cur_id} asignado a '{nom_nube}' en la nube (PC: {pc}).")
                 self.lbl_sucursal_info.setStyleSheet("color: #34D399; font-size: 11px; font-weight: 700;")
             elif cur_id == "1" and ("alfaro" in nom_actual.lower() or "2" in nom_actual.lower()):
-                self.lbl_sucursal_info.setText(f"⚠️ ID #1 pertenece a '{nom_nube}' (Casa Central). Para una sucursal separada use ID 2.")
+                self.lbl_sucursal_info.setText(
+                    f"⚠️ ID #1 pertenece a '{nom_nube}' (Casa Central). Para esta PC '{pc}' use el siguiente ID #{sig_id}."
+                )
                 self.lbl_sucursal_info.setStyleSheet("color: #FBBF24; font-size: 11px; font-weight: 700;")
             else:
-                self.lbl_sucursal_info.setText(f"ℹ️ ID #{cur_id} registrado en la nube como '{nom_nube}'. Al enlazar se actualizará a '{nom_actual}'.")
-                self.lbl_sucursal_info.setStyleSheet("color: #60A5FA; font-size: 11px; font-weight: 600;")
+                self.lbl_sucursal_info.setText(
+                    f"ℹ️ ID #{cur_id} ocupado por '{nom_nube}'. Para esta máquina '{pc}' el siguiente ID disponible es #{sig_id}."
+                )
+                self.lbl_sucursal_info.setStyleSheet("color: #38BDF8; font-size: 11px; font-weight: 700;")
         else:
-            self.lbl_sucursal_info.setText(f"✅ ID #{cur_id} 100% DISPONIBLE (Se registrará como nueva sucursal en la nube).")
+            self.lbl_sucursal_info.setText(
+                f"✅ ID #{cur_id} DISPONIBLE · Se registrará como '{nom_actual or pc}' (PC: {pc})."
+            )
             self.lbl_sucursal_info.setStyleSheet("color: #34D399; font-size: 11px; font-weight: 700;")
