@@ -41,7 +41,7 @@ Opera en aislamiento absoluto respecto al hilo de ventas y al Servidor MariaDB. 
 * `registrar_conectando(url, empresa, sucursal)`: Pasa el estado a `conectando`.
 * `registrar_en_progreso(mensaje)`: Marca `sincronizando=True` para informar a la UI en vivo que los deltas están en vuelo.
 * `registrar_exito(tablas, filas, empresa, sucursal, mensaje, duracion_seg)`: Marca `conectado=True`, `sincronizando=False` y almacena fecha, duración y contadores.
-* `registrar_error(error)`: Marca `conectado=False`, `sincronizando=False`, estado `error` y almacena el motivo para el botón "Reconectar". Si el motivo es MariaDB apagada y la sucursal ya quedó enlazada, el enlace sigue y la hora de último envío no se pisa.
+* `registrar_error(error)`: Registra el fallo en disco y memoria. Cuenta reintentos consecutivos: si el enlace ya estaba establecido, tolera hasta 3 micro-cortes manteniendo el estado enlazado degradado antes de pasar a `error` y desconectar. Si el motivo es MariaDB apagada y la sucursal ya quedó enlazada, el enlace sigue y la hora de último envío no se pisa.
 * `registrar_bajada(detalle)`: Actualiza fecha de la última bajada de datos.
 
 ---

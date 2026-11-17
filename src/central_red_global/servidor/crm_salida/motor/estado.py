@@ -192,6 +192,7 @@ class GestorEstado:
                 self._estado["filas_enviadas"] = filas or 0
                 self._estado["tablas_totales"] = tablas or 0
             self._estado["ultimo_error"] = None
+            self._estado["reintentos"] = 0
             self._estado["actualizado_en"] = time.time()
             self._guardar_disco()
 
@@ -200,6 +201,9 @@ class GestorEstado:
             self._estado["sincronizando"] = False
             self._estado["ultimo_error"] = error
             self._estado["actualizado_en"] = time.time()
+            reintentos = int(self._estado.get("reintentos") or 0) + 1
+            self._estado["reintentos"] = reintentos
+
             maria = "mariadb" in str(error or "").lower()
             if maria and self._estado.get("sucursal"):
                 self._estado["conectado"] = True
@@ -210,10 +214,19 @@ class GestorEstado:
                     "La hora de último envío es la anterior, no es de este intento."
                 )
             else:
-                self._estado["conectado"] = False
-                self._estado["enlace_activo"] = False
-                self._estado["estado_texto"] = "error"
-                self._estado["mensaje"] = f"Error de conexión: {error}"
+                # Tolerancia a microcortes de red: si ya estaba enlazado con éxito y lleva menos de 3 reintentos,
+                # se preserva el estado enlazado para evitar falsas alarmas visuales.
+                estaba_enlazado = bool(self._estado.get("conectado")) or bool(self._estado.get("ultimo_envio_exitoso"))
+                if estaba_enlazado and reintentos < 3:
+                    self._estado["conectado"] = True
+                    self._estado["enlace_activo"] = True
+                    self._estado["estado_texto"] = "conectado"
+                    self._estado["mensaje"] = f"Reintentando conexión ({reintentos}/3)..."
+                else:
+                    self._estado["conectado"] = False
+                    self._estado["enlace_activo"] = False
+                    self._estado["estado_texto"] = "error"
+                    self._estado["mensaje"] = f"Error de conexión: {error}"
             self._guardar_disco()
 
     def registrar_bajada(self, detalle: str) -> None:

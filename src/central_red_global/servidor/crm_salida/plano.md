@@ -112,6 +112,10 @@ Servidor de Tienda (bandeja.py / headless.py)
    * `motor/bajada.py`: Infraestructura lista para la recepción de precios y clientes desde la nube a través de staging protegido.
    * `vigilante.py`: Event-driven debounce sync (`notificar_venta`) disparado tras cada cobro en caja con circuit breaker y backoff adaptativo.
    * `tablero.py`: Chip visual en tiempo real (`self.chip_nube`) en el panel maestro con estado, filas sincronizadas y latencia en milisegundos.
+5. **Blindaje contra Micro-Cortes y Desconexiones Falsas:**
+   * `estado.py`: Si la tienda ya estaba enlazada con éxito, un fallo puntual de red no marca "DESCONECTADO" inmediatamente. Aplica un búfer de hasta 3 reintentos consecutivos manteniendo el estado visual `conectado (reintentando)` antes de degradar a error.
+   * `subida.py`: Auto-arranque de MariaDB si la máquina es maestra y el puerto 3306 se encuentra cerrado, evitando fallos silenciosos de lectura local.
+   * `servidor_web.py`: Uso de `SO_EXCLUSIVEADDRUSE` en Windows al verificar puertos libres, previniendo solapamiento entre procesos de fondo.
 
 ---
 
