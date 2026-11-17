@@ -103,7 +103,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const anterior = data.ultimo_error && String(data.ultimo_error).toLowerCase().indexOf("mariadb") >= 0;
       valUltimoEnvio.textContent = anterior ? (marca + " · anterior") : marca;
     }
-    if (valFilas) valFilas.textContent = `${data.filas_totales || 0} filas (${data.tablas_totales || 0} tablas)`;
+    if (valFilas) {
+      const progreso = data.progreso_ventas || (data.tickets_totales ? `${data.tickets_enviados || data.tickets_totales}/${data.tickets_totales}` : null);
+      if (progreso) {
+        valFilas.textContent = `Ventas: ${progreso} · ${data.filas_totales || 0} filas`;
+      } else {
+        valFilas.textContent = `${data.filas_totales || 0} filas (${data.tablas_totales || 0} tablas)`;
+      }
+    }
     if (valEmpresa) valEmpresa.textContent = data.empresa || "—";
     if (valSucursal) valSucursal.textContent = data.sucursal ? `#${data.sucursal_id || '1'} ${data.sucursal}` : "—";
 

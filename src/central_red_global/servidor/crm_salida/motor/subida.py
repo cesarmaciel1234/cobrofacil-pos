@@ -347,13 +347,21 @@ def _conexion_mariadb():
         if p is not None and p not in candidatos_pass:
             candidatos_pass.append(p)
 
+    candidatos_db = []
+    for d in [datos.get("database"), config.get("db_name"), "punpro_db", "punpro"]:
+        d_str = str(d or "").strip()
+        if d_str and d_str not in candidatos_db:
+            candidatos_db.append(d_str)
+
     intentos = []
     for h in candidatos_host:
         for p in candidatos_pass:
-            d = dict(datos)
-            d["host"] = h
-            d["password"] = p
-            intentos.append(d)
+            for db in candidatos_db:
+                d = dict(datos)
+                d["host"] = h
+                d["password"] = p
+                d["database"] = db
+                intentos.append(d)
 
     ultimo = None
     conn = None
@@ -614,24 +622,32 @@ def subir_base(
     hubo = False
     semanas_venta: dict[str, str] = {}
     dias_venta: dict[str, str] = {}
+    total_ventas_tienda = 0
+    ventas_enviadas_total = 0
     conteo_ventas = 0
     conteo_clientes = 0
     for tabla, columnas, todas in _fuente(ruta_db):
+        total_filas_tabla = len(todas)
         if tabla == "ventas":
-            conteo_ventas = len(todas)
+            total_ventas_tienda = total_filas_tabla
+            conteo_ventas = total_filas_tabla
             semanas_venta = _mapa_semanas(columnas, todas)
             dias_venta = _mapa_dias(columnas, todas)
         elif tabla == "clientes":
-            conteo_clientes = len(todas)
+            conteo_clientes = total_filas_tabla
         idx = _indice_id(columnas)
         previa = estado.get(tabla) or {}
+        filas_previas = len(previa.get("filas") or {})
         if idx is None:
             huella_tabla = _huella_fila(todas)
             nuevo[tabla] = {"modo": "tabla", "huella": huella_tabla}
             if previa.get("huella") == huella_tabla:
+                if tabla == "ventas":
+                    ventas_enviadas_total = total_ventas_tienda
                 continue
             bajas = []
             modo = "reemplazo"
+            filas_a_enviar = todas
         else:
             actuales = {}
             cambiadas = []
@@ -644,17 +660,23 @@ def subir_base(
             bajas = [clave for clave in (previa.get("filas") or {}) if clave not in actuales]
             nuevo[tabla] = {"modo": "id", "filas": actuales}
             if not cambiadas and not bajas:
+                if tabla == "ventas":
+                    ventas_enviadas_total = total_ventas_tienda
                 continue
-            todas = cambiadas
+            filas_a_enviar = cambiadas
             modo = "delta"
         hubo = True
         guia = semanas_venta if _indice_fecha(columnas) is None else None
         dias = dias_venta if _indice_fecha(columnas) is None else None
-        partes = _bloques(columnas, todas, guia, dias)
+        partes = _bloques(columnas, filas_a_enviar, guia, dias)
         fallo = None
         enviadas = 0
+        base_acumulada = filas_previas if modo == "delta" else 0
         for numero, bloque in enumerate(partes, start=1):
             enviadas += len(bloque)
+            total_acumulado = min(base_acumulada + enviadas, total_filas_tabla)
+            if tabla == "ventas":
+                ventas_enviadas_total = total_acumulado
             cuerpo = {
                 "tabla": tabla,
                 "columnas": columnas,
@@ -666,8 +688,9 @@ def subir_base(
             if modo == "delta" and numero == len(partes):
                 cuerpo["bajas"] = bajas
             if tabla == "ventas":
-                cuerpo["total_filas"] = len(todas)
-                cuerpo["enviadas"] = enviadas
+                cuerpo["total_filas"] = total_ventas_tienda
+                cuerpo["enviadas"] = total_acumulado
+                cuerpo["progreso_texto"] = f"{total_acumulado}/{total_ventas_tienda}"
                 cuerpo["dia"] = numero == 1
             if sucursal_id not in (None, ""):
                 cuerpo["sucursal_id"] = int(sucursal_id)
@@ -725,12 +748,18 @@ def subir_base(
             pass
     if not errores:
         guardar_estado(ruta_db, nuevo)
+    if not ventas_enviadas_total and total_ventas_tienda:
+        ventas_enviadas_total = total_ventas_tienda
     return {
+        "ok": len(errores) == 0,
         "tablas": tablas_ok,
         "filas": filas,
         "errores": errores,
         "delta": True,
         "ventas": conteo_ventas,
+        "ventas_subidas": ventas_enviadas_total,
+        "ventas_totales": total_ventas_tienda,
+        "progreso_ventas": f"{ventas_enviadas_total}/{total_ventas_tienda}" if total_ventas_tienda > 0 else f"{conteo_ventas}/{conteo_ventas}",
         "clientes": conteo_clientes,
     }
 

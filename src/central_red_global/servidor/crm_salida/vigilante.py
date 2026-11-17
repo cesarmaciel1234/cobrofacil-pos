@@ -96,14 +96,21 @@ def turno(rol: str, credenciales: dict | None, lanzar, *, solo_maestra: bool = S
 
 
 def _marcar_origen() -> str:
-    """Si la tienda usa MariaDB, lee MariaDB. Si no, según el rol."""
+    """Si la tienda usa MariaDB o el puerto local está abierto, lee MariaDB. Si no, según el rol."""
     try:
         from src.config import config
         db_engine = str(config.get("db_engine") or "").strip().lower()
     except Exception:
         db_engine = ""
 
-    if db_engine == "mariadb":
+    puerto_abierto = False
+    try:
+        from src.central_red_global.servidor.puerto import mariadb_port_open
+        puerto_abierto = mariadb_port_open()
+    except Exception:
+        pass
+
+    if db_engine == "mariadb" or puerto_abierto:
         origen = "mariadb"
     else:
         try:
@@ -211,14 +218,18 @@ def lanzar(credenciales: dict, forzar: bool = False) -> None:
     try:
         from src.central_red_global.servidor.crm_salida.motor.estado import estado_nube
 
+        t_subidos = dato.get("ventas_subidas", dato.get("ventas", 0))
+        t_totales = dato.get("ventas_totales", dato.get("ventas", 0))
+        progreso = dato.get("progreso_ventas") or (f"{t_subidos}/{t_totales}" if t_totales else f"{t_subidos}")
         estado_nube.registrar_exito(
             tablas=dato.get("tablas", 0),
             filas=dato.get("filas", dato.get("leidos", 0)),
-            tickets=dato.get("tickets", dato.get("ventas", 0)),
+            tickets=t_subidos,
+            tickets_totales=t_totales,
             clientes=dato.get("clientes", dato.get("leidos", 0)),
             empresa=credenciales.get("empresa"),
             sucursal=credenciales.get("sucursal"),
-            mensaje=f"Sincronizado con éxito ({dato.get('tablas', 0)} tablas, {dato.get('filas', 0)} filas)",
+            mensaje=f"Sincronizado con éxito — Ventas: {progreso} ({dato.get('tablas', 0)} tablas)",
         )
     except Exception:
         pass

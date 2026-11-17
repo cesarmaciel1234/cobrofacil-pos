@@ -162,6 +162,7 @@ class GestorEstado:
         tablas: int | None = None,
         filas: int | None = None,
         tickets: int | None = None,
+        tickets_totales: int | None = None,
         clientes: int | None = None,
         empresa: str | None = None,
         sucursal: str | None = None,
@@ -180,8 +181,16 @@ class GestorEstado:
                 self._estado["sucursal"] = sucursal
             if duracion_seg is not None:
                 self._estado["duracion_segundos"] = round(duracion_seg, 2)
-            if tickets is not None:
+            if tickets_totales is not None:
+                self._estado["tickets_totales"] = tickets_totales
+            elif tickets is not None:
                 self._estado["tickets_totales"] = tickets
+            if tickets is not None:
+                self._estado["tickets_enviados"] = tickets
+            tot = self._estado.get("tickets_totales") or 0
+            env = self._estado.get("tickets_enviados") or tickets or 0
+            if tot > 0:
+                self._estado["progreso_ventas"] = f"{env}/{tot}"
             if clientes is not None:
                 self._estado["clientes_totales"] = clientes
             if tablas is not None or filas is not None:
