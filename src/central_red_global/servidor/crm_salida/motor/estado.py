@@ -88,13 +88,13 @@ class GestorEstado:
                 empresa = str(config.get("crm_empresa") or config.get("crm_usuario") or "").strip()
                 sucursal = str(config.get("crm_sucursal") or "").strip()
                 sucursal_id = str(config.get("crm_sucursal_id") or "1").strip()
-                if url:
+                if url and not self._estado.get("url"):
                     self._estado["url"] = url
-                if empresa:
+                if empresa and not self._estado.get("empresa"):
                     self._estado["empresa"] = empresa
-                if sucursal:
+                if sucursal and not self._estado.get("sucursal"):
                     self._estado["sucursal"] = sucursal
-                if sucursal_id:
+                if sucursal_id and not self._estado.get("sucursal_id"):
                     self._estado["sucursal_id"] = sucursal_id
             except Exception:
                 pass

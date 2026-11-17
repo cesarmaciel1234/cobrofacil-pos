@@ -85,7 +85,10 @@ def _buscar_puerto_libre(puerto_inicial: int = _PUERTO_BASE) -> int:
         puerto = puerto_inicial + offset
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            if sys.platform != "win32":
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            else:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
             s.bind(("127.0.0.1", puerto))
             s.close()
             return puerto

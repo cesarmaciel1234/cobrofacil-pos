@@ -56,7 +56,7 @@ def run_store_server_app(app, background: bool = False) -> int:
         logger.warning(f"No se pudo ceder la titularidad: {e_ceder}")
 
     if vigila_mariadb():
-        encender_servicios_tienda(arrancar_mysqld=False)
+        encender_servicios_tienda(arrancar_mysqld=needs_mariadb() and not mariadb_port_open())
     else:
         cumplir_esclava()
 

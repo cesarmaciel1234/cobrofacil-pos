@@ -24,6 +24,7 @@ from src.central_red_global.servidor.crm_salida.web.servidor_web import (
 
 @pytest.fixture(autouse=True)
 def cleanup_web():
+    detener_servidor_web()
     from src.config import config
     from src.central_red_global.servidor.crm_salida.motor.estado import estado_nube
     url_orig = config.get("crm_url")

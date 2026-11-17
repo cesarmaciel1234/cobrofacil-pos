@@ -322,9 +322,18 @@ def _conexion_mariadb():
     """Lectura de MariaDB. Prueba el host configurado, IP maestra, localhost."""
     import pymysql
     from src.config import config
+    from src.central_red_global.servidor.puerto import mariadb_port_open, needs_mariadb
+
+    # Auto-arranque de MariaDB si esta máquina es maestra y el servicio local no está activo
+    if needs_mariadb() and not mariadb_port_open():
+        try:
+            from src.services.mariadb_controller import mariadb_controller
+            mariadb_controller.start_server()
+        except Exception:
+            pass
 
     datos = _motor_mariadb_local()._connect_kwargs()
-    datos.update(connect_timeout=5, read_timeout=120, write_timeout=10)
+    datos.update(connect_timeout=3, read_timeout=120, write_timeout=10)
 
     candidatos_host = []
     for h in [datos.get("host"), config.get("preferred_master_ip"), config.get("carteleria_master_ip"), "127.0.0.1", "localhost"]:
