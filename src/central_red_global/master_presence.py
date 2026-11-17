@@ -28,6 +28,8 @@ def es_pc_maestra_local() -> bool:
             return False
         if config.get("carteleria_is_slave"):
             return False
+        if config.get("is_master") is True and (not host or host in ("localhost", "127.0.0.1")):
+            return True
         pref = str(config.get("preferred_master_ip", "") or config.get("carteleria_master_ip", "") or "").strip().lower()
         if pref and pref not in ("localhost", "127.0.0.1"):
             from src.central_red_global.servidor.rol.ip import es_ip_de_esta_pc

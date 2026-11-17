@@ -207,9 +207,14 @@ COLUMNAS_CLIENTES = (
 
 
 def leer_clientes(ruta_db: str) -> list[dict]:
-    """Lee clientes. En la maestra salen de MariaDB; en la esclava, de su SQLite."""
+    """Lee clientes. En MariaDB salen de MariaDB; si falla, de su SQLite."""
     if os.environ.get("CRM_ORIGEN") == "mariadb":
-        return _clientes_mariadb()
+        try:
+            return _clientes_mariadb()
+        except Exception as exc:
+            logger.warning("CRM no se pudo leer clientes de MariaDB (%s), leyendo SQLite: %s", exc, ruta_db)
+            if not os.path.isfile(ruta_db):
+                raise
     conn = sqlite3.connect(f"file:{ruta_db}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
     try:
@@ -275,15 +280,23 @@ def manifiesto(ruta_db: str) -> str:
 
 def _fuente(ruta_db: str):
     if os.environ.get("CRM_ORIGEN") == "mariadb":
-        return leer_mariadb()
-    return leer_base(ruta_db)
+        try:
+            yield from leer_mariadb()
+            return
+        except Exception as exc:
+            logger.warning("CRM no se pudo leer MariaDB (%s), usando copia local SQLite: %s", exc, ruta_db)
+            if os.path.isfile(ruta_db):
+                yield from leer_base(ruta_db)
+                return
+            raise
+    yield from leer_base(ruta_db)
 
 
 def _motor_mariadb_local():
-    """El envío corre en otro proceso. Ese proceso puede figurar en SQLite
-    aunque MariaDB esté abierta y las esclavas estén recibiendo."""
+    """El envío corre en otro proceso. Lee config para host/puerto/clave."""
     from src.base_de_datos.database import db_manager
     from src.db_engines.mariadb_engine import MariaDBEngine
+    from src.config import config
 
     motor = getattr(db_manager, "mariadb_engine", None)
     enganchado = (
@@ -293,16 +306,46 @@ def _motor_mariadb_local():
     )
     if enganchado:
         return motor
-    return MariaDBEngine(host="127.0.0.1")
+
+    host = str(config.get("db_host") or config.get("preferred_master_ip") or "127.0.0.1").strip()
+    port = int(config.get("db_port") or config.get("mariadb_port") or 3306)
+    user = str(config.get("server_user") or "root").strip()
+    password = str(config.get("server_password") or "1234")
+    database = str(config.get("db_name") or "punpro_db").strip()
+    try:
+        return MariaDBEngine(host=host, port=port, user=user, password=password, database=database)
+    except TypeError:
+        return MariaDBEngine(host=host)
 
 
 def _conexion_mariadb():
-    """Lectura de la maestra. Prueba el puerto local. No se fía del cartel del proceso."""
+    """Lectura de MariaDB. Prueba el host configurado, IP maestra, localhost."""
     import pymysql
+    from src.config import config
 
     datos = _motor_mariadb_local()._connect_kwargs()
     datos.update(connect_timeout=5, read_timeout=120, write_timeout=10)
-    intentos = [datos, {**datos, "password": ""}, {**datos, "host": "localhost"}]
+
+    candidatos_host = []
+    for h in [datos.get("host"), config.get("preferred_master_ip"), config.get("carteleria_master_ip"), "127.0.0.1", "localhost"]:
+        h_str = str(h or "").strip()
+        if h_str and h_str not in candidatos_host:
+            candidatos_host.append(h_str)
+
+    passwords = [datos.get("password"), "1234", ""]
+    candidatos_pass = []
+    for p in passwords:
+        if p is not None and p not in candidatos_pass:
+            candidatos_pass.append(p)
+
+    intentos = []
+    for h in candidatos_host:
+        for p in candidatos_pass:
+            d = dict(datos)
+            d["host"] = h
+            d["password"] = p
+            intentos.append(d)
+
     ultimo = None
     conn = None
     for intento in intentos:
@@ -313,7 +356,8 @@ def _conexion_mariadb():
             ultimo = exc
     if conn is None:
         raise RuntimeError(
-            "El envío a la nube no pudo leer MariaDB en esta PC. "
+            "El envío a la nube no pudo conectar a MariaDB (hosts probados: "
+            f"{', '.join(candidatos_host)}). "
             "Eso no apaga la base: las esclavas pueden seguir recibiendo."
         ) from ultimo
     try:

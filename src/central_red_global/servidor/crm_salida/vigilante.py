@@ -99,12 +99,21 @@ def turno(rol: str, credenciales: dict | None, lanzar, *, solo_maestra: bool = S
 
 
 def _marcar_origen() -> str:
-    """La maestra lee MariaDB. La esclava lee su SQLite."""
+    """Si la tienda usa MariaDB, lee MariaDB. Si no, según el rol."""
     try:
-        rol = _rol()
+        from src.config import config
+        db_engine = str(config.get("db_engine") or "").strip().lower()
     except Exception:
-        rol = "esclava"
-    origen = "mariadb" if rol == "maestra" else "sqlite"
+        db_engine = ""
+
+    if db_engine == "mariadb":
+        origen = "mariadb"
+    else:
+        try:
+            rol = _rol()
+        except Exception:
+            rol = "esclava"
+        origen = "mariadb" if rol == "maestra" else "sqlite"
     os.environ["CRM_ORIGEN"] = origen
     return origen
 
@@ -135,7 +144,7 @@ def lanzar(credenciales: dict, forzar: bool = False) -> None:
             previa = archivo.read().strip()
     except OSError:
         previa = ""
-    if previa == firma:
+    if previa == firma and not forzar:
         from src.central_red_global.servidor.crm_salida.motor.subida import (
             fotografiar,
             guardar_estado,
@@ -147,20 +156,6 @@ def lanzar(credenciales: dict, forzar: bool = False) -> None:
             logger.info("CRM  la nube ya tiene este libro. Desde ahora solo salen los cambios.")
         else:
             logger.info("CRM  la base sigue igual. No se reenvía.")
-        if forzar:
-            try:
-                from src.central_red_global.servidor.crm_salida.motor.estado import estado_nube
-
-                est = estado_nube.obtener_estado()
-                estado_nube.registrar_exito(
-                    tablas=est.get("tablas_totales", 0),
-                    filas=est.get("filas_totales", 0),
-                    empresa=credenciales.get("empresa"),
-                    sucursal=credenciales.get("sucursal"),
-                    mensaje="Sincronizado: Base al día (sin cambios pendientes)",
-                )
-            except Exception:
-                pass
         return
     try:
         with open(ruta_cuando, encoding="utf-8") as archivo:
