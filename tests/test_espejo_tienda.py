@@ -186,6 +186,7 @@ def test_con_tienda_lee_en_vivo(tienda, monkeypatch):
 def test_incremental_trae_nuevas_y_cancelaciones(tienda, monkeypatch):
     copia.refrescar()
     tienda.db.execute("INSERT INTO ventas (id, fecha, total, estado) VALUES (3, ?, 40, 'COMPLETADA')", (_hoy("11:00:00"),))
+    tienda.db.execute("INSERT INTO detalles_ventas VALUES (2, 3, 'A1', 1, 40, 40)")
     tienda.db.execute("UPDATE ventas SET estado='CANCELADA', fecha_cancel=?, cancelado_por='jefe' WHERE id=2", (_hoy("12:00:00"),))
     tienda.db.commit()
     res = copia.refrescar()
@@ -262,6 +263,7 @@ def test_otra_maestra_no_mezcla_copias(tienda, tmp_path):
     tienda.nombre = "MAESTRA-NEGOCIO"
     tienda.db.execute("DELETE FROM ventas")
     tienda.db.execute("INSERT INTO ventas (id, fecha, total, estado) VALUES (900, ?, 5, 'COMPLETADA')", (_hoy(),))
+    tienda.db.execute("INSERT INTO detalles_ventas VALUES (3, 900, 'A1', 1, 5, 5)")
     tienda.db.commit()
     res = copia.refrescar()
     assert res["estado"] == "ok" and res["completo"]

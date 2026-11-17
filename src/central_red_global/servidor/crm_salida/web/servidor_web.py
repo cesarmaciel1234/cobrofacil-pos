@@ -191,7 +191,7 @@ class MiniWebHandler(BaseHTTPRequestHandler):
         empresa = str(datos.get("empresa") or datos.get("usuario") or "").strip()
         password = str(datos.get("password") or datos.get("clave") or "").strip()
         sucursal_id = str(datos.get("sucursal_id") or "").strip()
-        sucursal = str(datos.get("sucursal") or "").strip() or nombre_de_esta_pc()
+        sucursal = str(datos.get("sucursal") or "").strip()
 
         # REGLA OBLIGATORIA: El nombre de la sucursal es obligatorio
         if not sucursal:
@@ -259,14 +259,14 @@ class MiniWebHandler(BaseHTTPRequestHandler):
         # El servidor agarra el nombre de la máquina y le agrega el nombre y el ID siguiente disponible
         pc = nombre_de_esta_pc()
         nombre_sucursal = sucursal
-        if pc and pc.casefold() not in sucursal.casefold():
-            nombre_sucursal = f"{sucursal} - {pc}" if sucursal else pc
 
         if sucursales:
             conocido = id_para_esta_pc(sucursales, nombre_sucursal) or id_para_esta_pc(sucursales, sucursal)
             if conocido:
                 sucursal_id, nombre_sucursal = conocido
             else:
+                if pc and pc.casefold() not in nombre_sucursal.casefold():
+                    nombre_sucursal = f"{nombre_sucursal} - {pc}" if nombre_sucursal else pc
                 ids_ocupados = {
                     int(str(s.get("id")))
                     for s in sucursales
@@ -274,8 +274,11 @@ class MiniWebHandler(BaseHTTPRequestHandler):
                 }
                 if not sucursal_id or not sucursal_id.isdigit() or int(sucursal_id) in ids_ocupados:
                     sucursal_id = str(max(ids_ocupados) + 1) if ids_ocupados else "1"
-        elif not sucursal_id:
-            sucursal_id = "1"
+        else:
+            if pc and pc.casefold() not in nombre_sucursal.casefold():
+                nombre_sucursal = f"{nombre_sucursal} - {pc}" if nombre_sucursal else pc
+            if not sucursal_id:
+                sucursal_id = "1"
 
         # Guardar en config local de la tienda
         try:

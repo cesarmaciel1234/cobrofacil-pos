@@ -122,9 +122,10 @@ class CarritoService:
         # 2. Búsqueda por ID exacto (Barcode completo) primero
         p_exacto = self.buscar_producto_exacto(txt)
         if p_exacto:
-            factor = float(p_exacto.get("factor_unidades") or 1.0)
+            p_dict = dict(p_exacto) if hasattr(p_exacto, "keys") else p_exacto
+            factor = float(p_dict.get("factor_unidades") or 1.0) if isinstance(p_dict, dict) else 1.0
             cant_final = cantidad_multiplicador * factor
-            return True, p_exacto, cant_final, ""
+            return True, p_dict, cant_final, ""
 
         # 3. Códigos de Balanza (Configuración Dinámica)
         if BarcodeParser.is_balanza_ean(txt):
