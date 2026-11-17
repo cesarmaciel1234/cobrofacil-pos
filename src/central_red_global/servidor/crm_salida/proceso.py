@@ -20,8 +20,11 @@ def ruta_punpro() -> str:
     explicita = (os.environ.get("PUNPRO_DB") or "").strip()
     if explicita:
         return explicita
+    base_local = os.path.join(get_base_path(), "punpro.db")
+    if os.path.isfile(base_local) and os.path.getsize(base_local) > 0:
+        return base_local
     base_usuario = os.environ.get("LOCALAPPDATA") or ""
     espejo = os.path.join(base_usuario, "CobroFacil_PRO", "espejo_tienda", "espejo_tienda.db")
     if base_usuario and os.path.isfile(espejo) and os.path.getsize(espejo) > 0:
         return espejo
-    return os.path.join(get_base_path(), "punpro.db")
+    return base_local
