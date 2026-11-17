@@ -17,16 +17,13 @@ from src.central_red_global.servidor.crm_salida.proceso import comando, ruta_pun
 
 logger = logging.getLogger("crm_salida")
 
-# Plan gratis. Neon se duerme a los 5 min y Render a los 15.
-# La tienda hace unos 70 tickets por día (pico 89). El libro completo
-# tarda cerca de una hora, así que no se manda en cada venta.
-# Cada 30 min la tienda empuja lo nuevo. Si no hubo ventas, no llama a la nube.
-PAUSA_PRIMERA_SEG = 60.0
-PAUSA_VUELTA_SEG = 30 * 60.0
-MINIMO_ENTRE_ENVIOS_SEG = 30 * 60.0
+# Cada 10 min la tienda empuja lo nuevo de forma automática.
+# Además, sondea cada 30s si la web/PWA solicitó sincronización inmediata.
+PAUSA_PRIMERA_SEG = 30.0
+PAUSA_VUELTA_SEG = 10 * 60.0
+PAUSA_SONDEO_WEB_SEG = 30.0
+MINIMO_ENTRE_ENVIOS_SEG = 60.0
 TOPE_ENVIO_SEG = 2 * 60 * 60
-# Hoy la esclava también puede mandar su SQLite. El próximo paso es True:
-# solo la maestra empuja, y lo hace desde MariaDB.
 SOLO_MAESTRA = False
 
 _guardia = threading.Lock()
@@ -278,23 +275,91 @@ def _vuelta(forzar: bool = False) -> None:
         )
 
 
+def _consultar_peticion_web(credenciales: dict) -> bool:
+    """Pregunta a la nube si desde la web o PWA pidieron sincronizar."""
+    url = str(credenciales.get("url") or "").rstrip("/")
+    if not url:
+        return False
+    try:
+        import urllib.request
+        sid = str(credenciales.get("sucursal_id") or "1")
+        req = urllib.request.Request(
+            f"{url}/api/pos/sync/pendiente?sucursal_id={sid}",
+            headers={"User-Agent": "CobroFacil-POS-Industrial/2026"},
+        )
+        if credenciales.get("clave"):
+            req.add_header("X-API-Key", credenciales["clave"])
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            dato = json.loads(resp.read().decode("utf-8"))
+            return bool(dato.get("pedir_envio"))
+    except Exception:
+        return False
+
+
+def _confirmar_peticion_web(credenciales: dict) -> None:
+    """Avisa a la nube que la petición de la web ya fue procesada."""
+    url = str(credenciales.get("url") or "").rstrip("/")
+    if not url:
+        return
+    try:
+        import urllib.request
+        sid = str(credenciales.get("sucursal_id") or "1")
+        req = urllib.request.Request(
+            f"{url}/api/pos/sync/confirmar?sucursal_id={sid}",
+            headers={"User-Agent": "CobroFacil-POS-Industrial/2026"},
+        )
+        if credenciales.get("clave"):
+            req.add_header("X-API-Key", credenciales["clave"])
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            pass
+    except Exception:
+        pass
+
+
 def _ciclo() -> None:
-    pausa = PAUSA_PRIMERA_SEG
-    logger.info("CRM  módulo aparte en marcha. La esclava también envía los datos de la maestra.")
+    logger.info("CRM  módulo aparte en marcha. Rutina cada 10 min y escucha activa de peticiones web.")
+    ultimo_envio_rutina = time.time()
+
+    # Primera vuelta rápida a los 30 seg
+    if not _parar.wait(PAUSA_PRIMERA_SEG):
+        try:
+            _vuelta(forzar=False)
+        except Exception as exc:
+            logger.error("CRM  primera vuelta falló: %s", exc)
+        ultimo_envio_rutina = time.time()
+
     while not _parar.is_set():
-        _despertar.wait(pausa)
+        despertado = _despertar.wait(PAUSA_SONDEO_WEB_SEG)
         _despertar.clear()
         if _parar.is_set():
             break
-        pausa = PAUSA_VUELTA_SEG
+
         global _forzar_envio
         con_fuerza = False
         with _forzar_lock:
             if _forzar_envio:
                 con_fuerza = True
                 _forzar_envio = False
+
+        if not con_fuerza and not despertado:
+            # Nadie llamó a pedir_vuelta() en los últimos 30 seg.
+            creds = leer_credenciales()
+            if creds and _consultar_peticion_web(creds):
+                logger.info("CRM  la web/PWA solicitó sincronización. Despertando envío de inmediato.")
+                con_fuerza = True
+            elif time.time() - ultimo_envio_rutina >= PAUSA_VUELTA_SEG:
+                # Rutina de 10 minutos cumplida
+                con_fuerza = False
+            else:
+                continue
+
         try:
             _vuelta(forzar=con_fuerza)
+            ultimo_envio_rutina = time.time()
+            if con_fuerza:
+                creds = leer_credenciales()
+                if creds:
+                    _confirmar_peticion_web(creds)
         except Exception as exc:
             logger.error("CRM  el módulo falló una vuelta y el servidor sigue: %s", exc)
 
