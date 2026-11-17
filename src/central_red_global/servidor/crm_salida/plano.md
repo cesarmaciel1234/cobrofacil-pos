@@ -58,7 +58,7 @@ src/central_red_global/servidor/crm_salida/
      * **Empresa / Usuario:** Nombre comercial con el que se identifica la cuenta (ej. `maciel`).
      * **Contraseña:** Campo protegido con botón de alternar visibilidad.
      * **ID de Sucursal:** Número identificador (ej. `1`).
-     * **Nombre de Sucursal [OBLIGATORIO]:** Campo estrictamente requerido con validación en frontend y backend.
+     * **Nombre de Sucursal [OBLIGATORIO]:** Se toma solo, es el nombre de esta PC. Si ese nombre ya está en la nube y tiene número, el enlace usa ese número. Un nombre que no está no se enlaza con el número de otra.
    * **Dashboard de Telemetría Premium (Grilla 3x2):**
      * `🎫 TICKETS ENVIADOS`: Conteo total de tickets y ventas enviadas a la nube.
      * `👥 CLIENTES EN CARTERA`: Cartera de clientes fidelizados sincronizados con el CRM.

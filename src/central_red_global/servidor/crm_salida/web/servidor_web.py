@@ -33,6 +33,37 @@ _candado_servidor = threading.Lock()
 _puerto_activo: int = 0
 
 
+def nombre_de_esta_pc() -> str:
+    """El nombre de Windows de esta máquina. Es el nombre con el que se enlaza."""
+    try:
+        return str(socket.gethostname() or "").strip()
+    except Exception:
+        return ""
+
+
+def sucursal_ya_anotada(sucursales: list[dict] | None, nombre: str) -> dict | None:
+    """Si ese nombre ya está en la nube y tiene número, devuelve esa sucursal."""
+    clave = str(nombre or "").strip().casefold()
+    if not clave:
+        return None
+    for sucursal in sucursales or []:
+        if str(sucursal.get("nombre") or "").strip().casefold() != clave:
+            continue
+        if sucursal.get("id") in (None, ""):
+            continue
+        return sucursal
+    return None
+
+
+def id_para_esta_pc(sucursales: list[dict] | None, pedido: str = "") -> tuple[str, str] | None:
+    """Primero el nombre de la PC. Si no está, el nombre que escribieron, si ya tiene número."""
+    pc = nombre_de_esta_pc()
+    hallada = sucursal_ya_anotada(sucursales, pc) or sucursal_ya_anotada(sucursales, pedido)
+    if not hallada:
+        return None
+    return str(hallada["id"]), str(hallada.get("nombre") or pedido or pc)
+
+
 def _resolver_directorio_web() -> str:
     """Resuelve la ruta donde residen templates y static, compatible con desarrollo y PyInstaller."""
     if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
@@ -145,6 +176,7 @@ class MiniWebHandler(BaseHTTPRequestHandler):
 
     def _manejar_api_estado(self) -> None:
         estado = estado_nube.obtener_estado()
+        estado["nombre_pc"] = nombre_de_esta_pc()
         try:
             from src.config import config
 
@@ -158,8 +190,8 @@ class MiniWebHandler(BaseHTTPRequestHandler):
         url = str(datos.get("url") or "https://crm-frigorifico.onrender.com").strip().rstrip("/")
         empresa = str(datos.get("empresa") or datos.get("usuario") or "").strip()
         password = str(datos.get("password") or datos.get("clave") or "").strip()
-        sucursal_id = str(datos.get("sucursal_id") or "1").strip()
-        sucursal = str(datos.get("sucursal") or "").strip()
+        sucursal_id = str(datos.get("sucursal_id") or "").strip()
+        sucursal = str(datos.get("sucursal") or "").strip() or nombre_de_esta_pc()
 
         # REGLA OBLIGATORIA: El nombre de la sucursal es obligatorio
         if not sucursal:
@@ -198,9 +230,6 @@ class MiniWebHandler(BaseHTTPRequestHandler):
             config.set("crm_empresa", empresa)
             if password:
                 config.set("crm_password", password)
-            config.set("crm_sucursal_id", sucursal_id)
-            config.set("crm_sucursal", sucursal)
-            estado_nube.registrar_sucursal_local(sucursal_id, sucursal)
         except Exception as exc:
             logger.warning(f"Error guardando config local preliminar: {exc}")
 
@@ -227,19 +256,29 @@ class MiniWebHandler(BaseHTTPRequestHandler):
                 400,
             )
 
-        # Si el CRM ya tiene sucursales registradas, verificar si coincide la elegida por nombre
+        # El nombre de esta PC, si ya está en la nube, devuelve el número que ya tiene.
         nombre_sucursal = sucursal
         if sucursales:
-            coincidente = next(
-                (
-                    s
+            conocido = id_para_esta_pc(sucursales, sucursal)
+            if not conocido:
+                nombres = ", ".join(
+                    f"{s.get('nombre')} (#{s.get('id')})"
                     for s in sucursales
-                    if str(s.get("nombre", "")).strip().lower() == sucursal.strip().lower()
-                ),
-                None,
-            )
-            if coincidente:
-                sucursal_id = str(coincidente.get("id", sucursal_id))
+                    if s.get("nombre") and s.get("id") not in (None, "")
+                )
+                pc = nombre_de_esta_pc() or sucursal
+                detalle = (
+                    f"Esta PC se llama {pc}. En la nube ese nombre no está"
+                    + (f". Las que ya tienen número: {nombres}." if nombres else ".")
+                    + " No enlacé con otro nombre."
+                )
+                estado_nube.registrar_error(detalle)
+                return self._responder_json({"ok": False, "error": detalle, "sucursales": sucursales}, 400)
+            sucursal_id, nombre_sucursal = conocido
+        elif not sucursal_id:
+            detalle = "No pude ver las sucursales de la nube, así que no asigné un número."
+            estado_nube.registrar_error(detalle)
+            return self._responder_json({"ok": False, "error": detalle}, 400)
 
         # Guardar en config local de la tienda
         try:
@@ -276,6 +315,8 @@ class MiniWebHandler(BaseHTTPRequestHandler):
                 "ok": True,
                 "mensaje": f"Conectado exitosamente con la Nube. Sucursal #{sucursal_id} {nombre_sucursal}.",
                 "empresa_id": empresa_id,
+                "sucursal_id": sucursal_id,
+                "sucursal": nombre_sucursal,
                 "sucursales": sucursales,
                 "estado": estado_nube.obtener_estado(),
             }
@@ -305,6 +346,17 @@ class MiniWebHandler(BaseHTTPRequestHandler):
         if not ok:
             estado_nube.registrar_error(detalle)
             return self._responder_json({"ok": False, "error": detalle}, 400)
+
+        conocido = id_para_esta_pc(sucursales, sucursal) if sucursales else None
+        if conocido:
+            sucursal_id, sucursal = conocido
+            try:
+                from src.config import config
+
+                config.set("crm_sucursal_id", sucursal_id)
+                config.set("crm_sucursal", sucursal)
+            except Exception:
+                pass
 
         estado_nube.registrar_exito(
             empresa=empresa,

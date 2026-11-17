@@ -54,7 +54,8 @@ Esta subcarpeta contiene la interfaz web moderna (SPA nativa sin frameworks exte
 
 ## Qué devuelve cuando falla
 
-* **Nombre de sucursal vacío:** Devuelve HTTP 400 con `{"ok": false, "error": "El nombre de la sucursal es obligatorio...", "campo": "sucursal"}`. En pantalla, el campo de sucursal se resalta en rojo con un mensaje explícito.
+* **Nombre de sucursal vacío y la PC sin nombre:** Devuelve HTTP 400. Si la PC tiene nombre, ese nombre es el de la sucursal. Si ya está en la nube con un número, el enlace devuelve ese número. Un nombre que no está no se enlaza.
+* **MariaDB apagada:** El enlace queda. La hora de último envío que se ve es la anterior. El aviso dice que esta vuelta no leyó el libro.
 * **Credenciales incorrectas (401/403):** Devuelve HTTP 400 con el motivo del rechazo devuelto por Render. El banner cambia a rojo y se muestra el botón **Reconectar**.
 * **Falla de conexión a internet o Render dormido (502/503/504):** Devuelve HTTP 400 con la advertencia de timeout. La pantalla instruye a esperar o presionar "Reconectar", recalcando que el POS local no se ve afectado.
 

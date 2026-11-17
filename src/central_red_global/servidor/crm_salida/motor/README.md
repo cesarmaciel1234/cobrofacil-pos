@@ -18,6 +18,7 @@ Opera en aislamiento absoluto respecto al hilo de ventas y al Servidor MariaDB. 
 * `huella(clientes: list[dict], marca: str) -> str`: Genera un hash SHA-256 para detectar si la cartera de clientes sufrió alteraciones.
 * `manifiesto(ruta_db: str) -> str`: Genera el hash global SHA-256 de todas las tablas exportables de la base de datos local.
 * `leer_base(ruta_db: str)`: Generador iterativo que lee tabla por tabla en SQLite `mode=ro`, sanitizando y anulando columnas con nombres o valores sensibles (`password`, `token`, `secret`, `api_key`).
+* `_conexion_mariadb()`: En la maestra abre MariaDB local aunque este proceso figure en SQLite. El cartel viejo «no tiene MariaDB abierta» salía por ese flag, no porque la base estuviera apagada.
 * `_pedir(abridor, req, timeout, intentos=4)`: Wrapper HTTP industrial con reintentos para soportar los cold starts de Render (errores 502, 503, 504, RemoteDisconnected, HTTPException) con backoff exponencial suave y User-Agent identificado.
 * `subir_base(...) -> dict`: Al enlazar, manda la venta del día entera y después el resto en lotes de 150 filas hacia `/api/pos/base/tabla`. Aplica checkpointing progresivo por tabla: guarda el avance en disco apenas cada tabla finaliza con éxito, evitando retransmisiones redundantes ante microcortes.
 * `resolver_empresa(crm_url, api_key, nombre) -> str`: Convierte el slug/nombre comercial de la empresa en su ID numérico en la nube.
@@ -40,7 +41,7 @@ Opera en aislamiento absoluto respecto al hilo de ventas y al Servidor MariaDB. 
 * `registrar_conectando(url, empresa, sucursal)`: Pasa el estado a `conectando`.
 * `registrar_en_progreso(mensaje)`: Marca `sincronizando=True` para informar a la UI en vivo que los deltas están en vuelo.
 * `registrar_exito(tablas, filas, empresa, sucursal, mensaje, duracion_seg)`: Marca `conectado=True`, `sincronizando=False` y almacena fecha, duración y contadores.
-* `registrar_error(error)`: Marca `conectado=False`, `sincronizando=False`, estado `error` y almacena el motivo para el botón "Reconectar".
+* `registrar_error(error)`: Marca `conectado=False`, `sincronizando=False`, estado `error` y almacena el motivo para el botón "Reconectar". Si el motivo es MariaDB apagada y la sucursal ya quedó enlazada, el enlace sigue y la hora de último envío no se pisa.
 * `registrar_bajada(detalle)`: Actualiza fecha de la última bajada de datos.
 
 ---

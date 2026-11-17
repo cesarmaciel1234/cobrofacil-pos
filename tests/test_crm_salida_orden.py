@@ -9,6 +9,59 @@ from src.central_red_global.servidor.crm_salida.motor.subida import (
 )
 
 
+def test_el_envio_lee_mariadb_aunque_este_proceso_figure_en_sqlite(monkeypatch):
+    class Motor:
+        def _connect_kwargs(self):
+            return {
+                "host": "127.0.0.1",
+                "port": 3306,
+                "user": "root",
+                "password": "no-se-imprime",
+                "database": "punpro_db",
+            }
+
+    class Gestor:
+        db_engine_type = "sqlite"
+        _forced_local_offline = True
+        mariadb_engine = None
+
+    class Cursor:
+        def execute(self, *args, **kwargs):
+            return None
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    class Conn:
+        def cursor(self):
+            return Cursor()
+
+    vistos = {}
+
+    def conectar(**kwargs):
+        vistos["host"] = kwargs.get("host")
+        vistos["read_timeout"] = kwargs.get("read_timeout")
+        return Conn()
+
+    monkeypatch.setattr("src.base_de_datos.database.db_manager", Gestor())
+    monkeypatch.setattr(
+        "src.db_engines.mariadb_engine.MariaDBEngine",
+        lambda host="127.0.0.1": Motor(),
+    )
+    import pymysql
+
+    monkeypatch.setattr(pymysql, "connect", conectar)
+
+    from src.central_red_global.servidor.crm_salida.motor.subida import _conexion_mariadb
+
+    assert _conexion_mariadb() is not None
+    assert vistos["host"] == "127.0.0.1"
+    assert vistos["read_timeout"] == 120
+
+
 def test_las_ventas_salen_antes_que_los_renglones():
     orden = _ordenar_tablas(
         ["detalles_ventas", "abastecimiento", "ventas", "clientes", "zz_cierre"]

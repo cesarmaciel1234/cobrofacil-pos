@@ -92,17 +92,17 @@
           <div class="form-row">
             <div>
               <label class="form-label" for="sucursal_id">ID</label>
-              <input type="number" id="sucursal_id" class="form-input" placeholder="1" value="1" min="1" required>
+              <input type="number" id="sucursal_id" class="form-input" placeholder="lo devuelve la nube" min="1" readonly>
             </div>
             <div>
               <label class="form-label" for="sucursal">
                 <span>Nombre de Sucursal</span>
                 <span class="obligatorio">* Obligatorio</span>
               </label>
-              <input type="text" id="sucursal" class="form-input" placeholder="Ej: Casa Central / Sucursal Maciel" required>
+              <input type="text" id="sucursal" class="form-input" placeholder="Nombre de esta PC" required readonly>
             </div>
           </div>
-          <div class="form-help">Requerido para que la nube distinga entre múltiples sucursales de la empresa.</div>
+          <div class="form-help">Si el nombre de esta PC ya está en la nube con un número, el enlace usa ese número. Si no, se queda la sucursal que ya tiene número.</div>
         </div>
 
         <div class="btn-group">

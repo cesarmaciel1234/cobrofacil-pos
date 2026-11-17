@@ -197,13 +197,23 @@ class GestorEstado:
 
     def registrar_error(self, error: str) -> None:
         with self._lock:
-            self._estado["conectado"] = False
-            self._estado["enlace_activo"] = False
             self._estado["sincronizando"] = False
-            self._estado["estado_texto"] = "error"
             self._estado["ultimo_error"] = error
-            self._estado["mensaje"] = f"Error de conexión: {error}"
             self._estado["actualizado_en"] = time.time()
+            maria = "mariadb" in str(error or "").lower()
+            if maria and self._estado.get("sucursal"):
+                self._estado["conectado"] = True
+                self._estado["enlace_activo"] = True
+                self._estado["estado_texto"] = "conectado"
+                self._estado["mensaje"] = (
+                    "El enlace quedó. Esta vuelta no leyó el libro: MariaDB no está abierta. "
+                    "La hora de último envío es la anterior, no es de este intento."
+                )
+            else:
+                self._estado["conectado"] = False
+                self._estado["enlace_activo"] = False
+                self._estado["estado_texto"] = "error"
+                self._estado["mensaje"] = f"Error de conexión: {error}"
             self._guardar_disco()
 
     def registrar_bajada(self, detalle: str) -> None:

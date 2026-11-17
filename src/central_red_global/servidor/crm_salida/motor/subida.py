@@ -279,19 +279,43 @@ def _fuente(ruta_db: str):
     return leer_base(ruta_db)
 
 
-def _conexion_mariadb():
-    """Lectura de la maestra. Si MariaDB no está, no se usa la copia SQLite."""
-    import pymysql
+def _motor_mariadb_local():
+    """El envío corre en otro proceso. Ese proceso puede figurar en SQLite
+    aunque MariaDB esté abierta y las esclavas estén recibiendo."""
     from src.base_de_datos.database import db_manager
+    from src.db_engines.mariadb_engine import MariaDBEngine
 
-    if getattr(db_manager, "db_engine_type", "") != "mariadb" or getattr(db_manager, "_forced_local_offline", False):
-        raise RuntimeError("La maestra no tiene MariaDB abierta")
     motor = getattr(db_manager, "mariadb_engine", None)
-    if motor is None:
-        raise RuntimeError("La maestra no tiene MariaDB abierta")
-    datos = motor._connect_kwargs()
+    enganchado = (
+        getattr(db_manager, "db_engine_type", "") == "mariadb"
+        and not getattr(db_manager, "_forced_local_offline", False)
+        and motor is not None
+    )
+    if enganchado:
+        return motor
+    return MariaDBEngine(host="127.0.0.1")
+
+
+def _conexion_mariadb():
+    """Lectura de la maestra. Prueba el puerto local. No se fía del cartel del proceso."""
+    import pymysql
+
+    datos = _motor_mariadb_local()._connect_kwargs()
     datos.update(connect_timeout=5, read_timeout=120, write_timeout=10)
-    conn = pymysql.connect(**datos)
+    intentos = [datos, {**datos, "password": ""}, {**datos, "host": "localhost"}]
+    ultimo = None
+    conn = None
+    for intento in intentos:
+        try:
+            conn = pymysql.connect(**intento)
+            break
+        except Exception as exc:
+            ultimo = exc
+    if conn is None:
+        raise RuntimeError(
+            "El envío a la nube no pudo leer MariaDB en esta PC. "
+            "Eso no apaga la base: las esclavas pueden seguir recibiendo."
+        ) from ultimo
     try:
         with conn.cursor() as cur:
             cur.execute("SET SESSION TRANSACTION READ ONLY")

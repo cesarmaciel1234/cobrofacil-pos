@@ -98,24 +98,36 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!data) return;
 
     // Campos de telemetría
-    if (valUltimoEnvio) valUltimoEnvio.textContent = data.ultimo_envio || "Sin envíos recientes";
+    if (valUltimoEnvio) {
+      const marca = data.ultimo_envio || "Sin envíos recientes";
+      const anterior = data.ultimo_error && String(data.ultimo_error).toLowerCase().indexOf("mariadb") >= 0;
+      valUltimoEnvio.textContent = anterior ? (marca + " · anterior") : marca;
+    }
     if (valFilas) valFilas.textContent = `${data.filas_totales || 0} filas (${data.tablas_totales || 0} tablas)`;
     if (valEmpresa) valEmpresa.textContent = data.empresa || "—";
     if (valSucursal) valSucursal.textContent = data.sucursal ? `#${data.sucursal_id || '1'} ${data.sucursal}` : "—";
 
     // Rellenar campos SOLO en la primera carga o si están vacíos para no pisar lo que escribe el usuario
+    const pc = String(data.nombre_pc || "").trim();
+    const guardada = String(data.sucursal || "").trim();
+    if (guardada) {
+      sucursalInput.value = guardada;
+      sucursalInput.readOnly = true;
+      if (data.sucursal_id) sucursalIdInput.value = data.sucursal_id;
+    } else if (pc) {
+      sucursalInput.value = pc;
+      sucursalInput.readOnly = true;
+    }
     if (!datosCargadosInicialmente) {
       if (data.url) urlInput.value = data.url;
       if (data.empresa) empresaInput.value = data.empresa;
-      if (data.sucursal_id) sucursalIdInput.value = data.sucursal_id;
-      if (data.sucursal) sucursalInput.value = data.sucursal;
       datosCargadosInicialmente = true;
     } else {
       if (!urlInput.value && data.url) urlInput.value = data.url;
       if (!empresaInput.value && data.empresa) empresaInput.value = data.empresa;
-      if (!sucursalIdInput.value && data.sucursal_id) sucursalIdInput.value = data.sucursal_id;
-      if (!sucursalInput.value && data.sucursal) sucursalInput.value = data.sucursal;
     }
+    const mismaPc = data.nombre_pc && String(data.sucursal || "").trim().toLowerCase() === String(data.nombre_pc).trim().toLowerCase();
+    if (mismaPc && data.sucursal_id) sucursalIdInput.value = data.sucursal_id;
     if (data.tiene_clave_guardada && !passwordInput.value) {
       passwordInput.placeholder = "•••••••• (Contraseña guardada)";
     }
@@ -127,8 +139,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (estado === "conectado") {
       statusBanner.classList.add("conectado");
       statusTitle.textContent = "● CONECTADO A LA NUBE";
-      statusDesc.textContent = `Enlace activo con ${data.empresa || 'empresa'} (${data.sucursal || 'sucursal'}). El negocio sigue vendiendo localmente.`;
-      errorBox.classList.remove("active");
+      statusDesc.textContent = data.ultimo_error
+        ? (data.mensaje || data.ultimo_error)
+        : `Enlace activo con ${data.empresa || 'empresa'} (${data.sucursal || 'sucursal'}). El negocio sigue vendiendo localmente.`;
+      if (data.ultimo_error) {
+        errorBox.classList.add("active");
+        errorMsg.textContent = data.ultimo_error;
+      } else {
+        errorBox.classList.remove("active");
+      }
       btnReconectar.style.display = "none";
       btnSincronizar.style.display = "inline-flex";
       btnConectar.textContent = "Actualizar Enlace";
@@ -217,12 +236,13 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(data.error || "Fallo de conexión");
       }
 
-      if (data.sucursales && data.sucursales.length > 0) {
-        const primera = data.sucursales[0];
-        if (!sucursalInput.value) sucursalInput.value = primera.nombre || "";
-        if (!sucursalIdInput.value) sucursalIdInput.value = primera.id || "1";
+      if (data.sucursal_id) sucursalIdInput.value = data.sucursal_id;
+      if (data.sucursal && !data.nombre_pc) sucursalInput.value = data.sucursal;
+      if (data.estado) {
+        data.estado.nombre_pc = data.estado.nombre_pc || (document.getElementById("sucursal") && sucursalInput.value);
+        if (data.sucursal_id) data.estado.sucursal_id = data.sucursal_id;
+        if (data.sucursal) data.estado.sucursal = data.sucursal;
       }
-
       renderEstado(data.estado);
     } catch (err) {
       errorBox.classList.add("active");
