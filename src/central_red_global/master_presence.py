@@ -16,30 +16,18 @@ def es_pc_maestra_local() -> bool:
     """
     try:
         from src.config import config
+        from src.base_de_datos.core.red_rol import leer_rol_red_desde_config
 
-        host = str(config.get("db_host", "") or "").strip().lower()
-        # Una IP LAN propia equivale a localhost; no es una maestra remota.
-        if host and host not in ("localhost", "127.0.0.1"):
-            from src.central_red_global.servidor.rol.ip import es_ip_de_esta_pc
-
-            if not es_ip_de_esta_pc(host):
-                return False
-        if config.get("is_master") is False:
-            return False
-        if config.get("carteleria_is_slave"):
-            return False
-        if config.get("is_master") is True and (not host or host in ("localhost", "127.0.0.1")):
-            return True
-        pref = str(config.get("preferred_master_ip", "") or config.get("carteleria_master_ip", "") or "").strip().lower()
-        if pref and pref not in ("localhost", "127.0.0.1"):
-            from src.central_red_global.servidor.rol.ip import es_ip_de_esta_pc
-
-            if not es_ip_de_esta_pc(pref):
-                return False
-        return True
+        data = {
+            key: config.get(key)
+            for key in ("db_host", "is_master", "carteleria_is_slave",
+                        "preferred_master_ip", "carteleria_master_ip")
+        }
+        es_esclava, _ = leer_rol_red_desde_config(data)
+        return not es_esclava
     except Exception as e:
-        logger.debug(f"master_presence: no se pudo evaluar rol maestra: {e}")
-        return True
+        logger.error(f"master_presence: no se pudo evaluar rol maestra: {e}")
+        return False
 
 
 # Compat

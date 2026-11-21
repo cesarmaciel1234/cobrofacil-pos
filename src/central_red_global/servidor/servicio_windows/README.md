@@ -8,3 +8,5 @@ Cómo funciona:
 - `main.py` intercepta `--winservice` al principio sin cargar PyQt6 ni WebEngine, cambiando `cwd` al directorio real de la tienda (`--service-root` / `get_base_path()`).
 - Si falta privilegio Admin al activar `Win: ON` en una sesión estándar, el autostart conserva el respaldo por Tarea Programada + acceso directo, y el botón de estado del servidor ofrece activar Session 0 vía UAC (`ShellExecuteW(..., "runas")`).
 - `candados.py` consulta `QueryServiceStatusEx` (permitido para usuarios estándar) para no intentar duplicar ni borrar candados de un proceso `LocalSystem`.
+- El servicio comprueba cada segundo que el hilo del núcleo siga vivo. Una salida inesperada se informa como fallo al SCM; al instalar o actualizar el servicio se configura también la recuperación ante salidas con error. Una parada solicitada sigue siendo limpia.
+- Esto no sustituye un chequeo integral de salud de base, LAN y cola; `SERVICE_RUNNING` por sí solo no confirma que la tienda pueda vender.

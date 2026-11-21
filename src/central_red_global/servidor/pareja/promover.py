@@ -11,6 +11,21 @@ ESPERA_SEG = 300
 _desde: float | None = None
 
 
+def _guardar_puesto(config, cambios: dict) -> bool:
+    anterior = config.data.copy()
+    try:
+        config.data.update(cambios)
+        config.save()
+        guardado = config._leer_json()
+        if any(guardado.get(clave) != valor for clave, valor in cambios.items()):
+            raise RuntimeError("La configuración guardada no coincide con el puesto solicitado")
+        return True
+    except Exception as e:
+        config.data = anterior
+        logger.error("pareja  no se pudo confirmar la configuración del puesto: %s", e)
+        return False
+
+
 def _titular_vive() -> bool:
     from src.central_red_global.servidor.pareja.buscar import _guardada, elegir, puerto_abierto
 
@@ -123,12 +138,22 @@ def _promover() -> bool:
 
     from src.config import config
 
-    config.data["is_master"] = True
-    config.data["db_engine"] = "mariadb"
-    config.data["db_host"] = "127.0.0.1"
-    config.data["carteleria_is_slave"] = False
-    config.data["api_url"] = "http://127.0.0.1:8000"
-    config.save()
+    if not _guardar_puesto(config, {
+        "is_master": True,
+        "db_engine": "mariadb",
+        "db_host": "127.0.0.1",
+        "carteleria_is_slave": False,
+        "preferred_master_ip": "",
+        "carteleria_master_ip": "",
+        "api_url": "http://127.0.0.1:8000",
+    }):
+        db_manager.is_master = False
+        try:
+            db_manager.reconectar_local()
+        except Exception as e:
+            logger.error("pareja  no se pudo volver al modo offline: %s", e)
+        logger.error("pareja  promoción detenida; revisar MariaDB local y configuración")
+        return False
     logger.info("pareja  espejo cargado, esta PC es la titular")
     from src.central_red_global.servidor.oficio.agente import retomar_oficio
 
@@ -146,7 +171,13 @@ def ceder_si_hay_otra() -> bool:
     except Exception:
         return False
     from src.base_de_datos.autoblindaje.quien.maestra import Quien
-    from src.central_red_global.servidor.pareja.buscar import oir_anuncios, puerto_abierto
+    from src.central_red_global.servidor.pareja.buscar import oir_anuncios, tiene_la_tienda
+    from src.config import config
+
+    identidad = str(config.get("store_id", "") or "").strip()
+    if not identidad:
+        logger.warning("pareja  no se puede ceder: falta la identidad de esta tienda")
+        return False
 
     for aviso in oir_anuncios():
         if aviso.get("reserva"):
@@ -156,17 +187,20 @@ def ceder_si_hay_otra() -> bool:
         ip = str(aviso.get("server_ip") or aviso.get("_desde") or "").strip()
         if not ip or Quien._es_esta_pc(ip):
             continue
-        if not puerto_abierto(ip):
+        if str(aviso.get("store_id") or "").strip() != identidad:
             continue
-        from src.config import config
+        if not tiene_la_tienda(ip):
+            continue
 
-        config.data["is_master"] = False
-        config.data["db_host"] = ip
-        config.data["preferred_master_ip"] = ip
-        config.data["carteleria_master_ip"] = ip
-        config.data["carteleria_is_slave"] = True
-        config.data["api_url"] = f"http://{ip}:8000"
-        config.save()
+        if not _guardar_puesto(config, {
+            "is_master": False,
+            "db_host": ip,
+            "preferred_master_ip": ip,
+            "carteleria_master_ip": ip,
+            "carteleria_is_slave": True,
+            "api_url": f"http://{ip}:8000",
+        }):
+            return False
         logger.info("pareja  ya hay titular en %s, esta PC queda esclava", ip)
         try:
             from src.services.mariadb_controller import mariadb_controller

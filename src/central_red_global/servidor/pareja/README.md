@@ -8,7 +8,7 @@ La titular guarda la tienda y, cada minuto, avisa su IP para que las esclavas ba
 ## Qué función
 * `buscar()` en `buscar.py`: pregunta por UDP 37020 y acepta una IP solo si el anuncio lleva el mismo `store_id` estable y su MariaDB tiene la tabla `productos`. Esto también se exige a la IP guardada: si el anuncio falta, es de otra tienda o no se puede confirmar, no se usa esa conexión y la caja permanece offline. Reutiliza el anuncio ya validado para guardar la IP nueva sin repetir el descubrimiento ni la consulta a MariaDB. `adoptar()` ofrece la misma validación para enlaces directos. No se enlaza otra tienda ni un servidor sin identidad.
 * `prender()` en `reserva.py`: entre las esclavas, la de nombre más bajo es la reserva. Responde `PUNPRO_DISCOVER` con `reserva` y la IP de la titular. `rol_latido()` pone `reserva` en el aviso de presencia.
-* `vigilar()` en `promover.py`: si esta PC es la reserva y nadie abre el 3306 durante cinco minutos, verifica que tenga `store_id`, prende MariaDB local, crea el esquema y `sumar()` vuelca el espejo. Después guarda `is_master` y rearranca el servidor como titular. `ceder_si_hay_otra()` al arrancar: si otra titular ya contesta, esta PC no abre una segunda tienda.
+* `vigilar()` en `promover.py`: si esta PC es la reserva y nadie abre el 3306 durante cinco minutos, verifica que tenga `store_id`, prende MariaDB local, crea el esquema y `sumar()` vuelca el espejo. Después guarda `is_master`, limpia las IP preferidas antiguas y rearranca el servidor como titular. `ceder_si_hay_otra()` solo cede ante una titular con el mismo `store_id` y una MariaDB que contenga `productos`; sin identidad o validación no cambia la configuración ni apaga MariaDB.
 * `debe_esperar()`, `pedir()`, `responder()` y `soltar_propios()` en `acuse.py`: la cola marca `en_titular` y no borra el ticket hasta el acuse `ESPEJO_LISTO`. Si la titular cambia de PC, ese ticket se vuelve a mandar.
 
 ## Cómo funciona
@@ -18,6 +18,16 @@ La titular guarda la tienda y, cada minuto, avisa su IP para que las esclavas ba
 4. Si nadie abre el 3306 durante cinco minutos, la reserva suma su espejo a una MariaDB local y pasa a ser la titular. Si la titular vuelve mientras tanto, la reserva apaga esa MariaDB y sigue esclava. Si el espejo no entra, tampoco cambia de puesto. Las demás la buscan en la red y le suben lo que la reserva todavía no tenía, aunque ya se lo hubieran mandado a la titular vieja. La PC vieja, si vuelve y ya hay titular, queda esclava y apaga su MariaDB.
 
 La titular crea el `store_id` la primera vez que contesta descubrimientos. Las esclavas lo fijan al enlazarse y la reserva lo aprende mientras la titular está viva. «Convertir en ESCLAVA» también exige verificarlo. Si se reemplaza la PC por otra y se restaura la misma tienda, hay que conservar ese `store_id` en `config.json`; sin una identidad coincidente, el cambio automático se rechaza para no mezclar datos de otro negocio.
+
+La cesión y la promoción comprueban que los cambios de rol hayan quedado en
+`config.json`. Si no se confirman, no se anuncia la promoción ni se apaga
+MariaDB por la cesión; la promoción fallida registra que debe revisarse su base
+local. No se eliminan ventas, colas ni espejos.
+
+La detección por UDP y tiempo de espera no constituye un consenso distribuido:
+una partición de red puede hacer que dos puestos se crean titulares. No
+considerar este mecanismo alta disponibilidad sin coordinación externa, control
+de titularidad exclusivo y pruebas reales de cortes y recuperación.
 
 ## Qué no debe cambiar
 * No abrir MariaDB en la reserva mientras la titular contesta. Solo a los cinco minutos de silencio.

@@ -13,6 +13,13 @@ El proceso `--server` abre una ventana en los dos puestos. El t�tulo es �Ser
 
 `network_engine.py` lanza los servicios de red seg�n el perfil. `lan_server.py` es la API LAN. `master_presence.py` dice si esta PC es la maestra. La conversi�n explícita valida MariaDB local, normaliza `db_host` a `localhost` y reinicia el oficio para que el servidor adopte el perfil nuevo.
 
+La presencia y el motor de base usan el mismo criterio de `core/red_rol.py`.
+Una dirección remota preferida mantiene el puesto como esclava aun si `db_host`
+es local; la promoción confirmada limpia las referencias a la titular anterior.
+La cesión automática requiere una identidad de tienda coincidente y una MariaDB
+con la tabla de productos. Sin identidad no se cambia el puesto ni se apaga la
+base por el anuncio de otra PC.
+
 La API HTTP de la maestra atiende solicitudes en paralelo con un límite de 32 conexiones activas; las conexiones que exceden el límite se rechazan para contener recursos. Los supervisores HTTP y UDP registran fallos de enlace/servicio y vuelven a intentar cada cinco segundos. `init_lan_server()` evita iniciar supervisores duplicados. Esto mejora la concurrencia y la recuperación local, pero no sustituye alta disponibilidad ni pruebas bajo carga con MariaDB real.
 
 `servidor/oficio/agente.py` es el corte del proceso `--server`. La maestra es el coraz�n: guarda la tienda y, cuando el dato cambia, lo reparte a teles y esclavas. Cada minuto vuelve a avisar su IP para que las esclavas bajen el espejo. La tienda tiene un `store_id` estable que viaja en el descubrimiento; la IP es solo su direcci�n actual. Una esclava guarda esa identidad y solo acepta otra IP que anuncie la misma tienda y cuya MariaDB tenga `productos`. Una segunda maestra, la reserva (la esclava de nombre m�s bajo), conserva la misma identidad junto con el espejo. Si la titular no contesta cinco minutos, la reserva suma el espejo a su MariaDB y pasa a ser la titular; las dem�s la buscan y le suben lo que faltaba. Si la PC vieja vuelve y ya hay titular, queda esclava. No abre otra tienda mientras la titular contesta.

@@ -14,7 +14,7 @@ def test_ip_de_esta_pc_no_se_considera_maestra_remota(monkeypatch):
     }
     monkeypatch.setattr(config, "get", lambda key, default=None: values.get(key, default))
     monkeypatch.setattr(
-        "src.central_red_global.servidor.rol.ip.es_ip_de_esta_pc",
+        "src.base_de_datos.core.red_rol.es_ip_de_esta_pc",
         lambda _host: True,
     )
 
@@ -33,7 +33,7 @@ def test_ip_guardada_de_otra_pc_no_deja_anunciar_maestra(monkeypatch):
     }
     monkeypatch.setattr(config, "get", lambda key, default=None: values.get(key, default))
     monkeypatch.setattr(
-        "src.central_red_global.servidor.rol.ip.es_ip_de_esta_pc",
+        "src.base_de_datos.core.red_rol.es_ip_de_esta_pc",
         lambda _host: False,
     )
 
@@ -51,7 +51,7 @@ def test_ip_de_otra_pc_sigue_siendo_esclava(monkeypatch):
     }
     monkeypatch.setattr(config, "get", lambda key, default=None: values.get(key, default))
     monkeypatch.setattr(
-        "src.central_red_global.servidor.rol.ip.es_ip_de_esta_pc",
+        "src.base_de_datos.core.red_rol.es_ip_de_esta_pc",
         lambda _host: False,
     )
 

@@ -3,7 +3,9 @@
 import ctypes
 import os
 import sys
+import threading
 from unittest.mock import MagicMock
+import pytest
 
 from src.central_red_global.servidor.servicio_windows import gestor
 from src.utils import candados
@@ -127,3 +129,43 @@ def test_instalar_servicio_windows_requiere_admin(monkeypatch):
     assert ok is False
     assert "Administrador" in msg or "Windows" in msg
     assert not sc_mock.called
+
+
+def test_instalacion_configura_recuperacion_ante_salida_con_error(monkeypatch, tmp_path):
+    if sys.platform != "win32":
+        return
+    monkeypatch.setattr(gestor, "es_administrador", lambda: True)
+    monkeypatch.setattr(gestor, "servicio_instalado", lambda: False)
+    calls = []
+    monkeypatch.setattr(gestor, "_sc_run", lambda *args: calls.append(args) or MagicMock(returncode=0))
+
+    ok, _ = gestor.instalar_servicio_windows(str(tmp_path), iniciar=False)
+    assert ok is True
+    assert ("failureflag", gestor.SERVICE_NAME, "1") in calls
+
+
+def test_instalacion_informa_si_falla_configuracion_de_recuperacion(monkeypatch, tmp_path):
+    if sys.platform != "win32":
+        return
+    monkeypatch.setattr(gestor, "es_administrador", lambda: True)
+    monkeypatch.setattr(gestor, "servicio_instalado", lambda: False)
+    monkeypatch.setattr(gestor, "_sc_run", lambda *args: MagicMock(returncode=1 if args[0] == "failureflag" else 0))
+
+    ok, message = gestor.instalar_servicio_windows(str(tmp_path), iniciar=False)
+    assert ok is False
+    assert "recuperación" in message
+
+
+def test_vigilancia_detecta_caida_del_nucleo():
+    from src.central_red_global.servidor.servicio_windows.servicio import _vigilar_trabajador
+
+    with pytest.raises(RuntimeError, match="terminó inesperadamente"):
+        _vigilar_trabajador(MagicMock(is_alive=lambda: False), threading.Event(), lambda: False)
+
+
+def test_vigilancia_respeta_detencion_solicitada():
+    from src.central_red_global.servidor.servicio_windows.servicio import _vigilar_trabajador
+
+    stop = threading.Event()
+    _vigilar_trabajador(MagicMock(is_alive=lambda: False), stop, lambda: True)
+    assert stop.is_set()

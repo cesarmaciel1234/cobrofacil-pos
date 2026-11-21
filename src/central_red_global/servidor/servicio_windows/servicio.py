@@ -13,6 +13,15 @@ from src.central_red_global.servidor.servicio_windows.gestor import (
 )
 
 
+def _vigilar_trabajador(worker, stop_event, esperar_stop) -> None:
+    while not stop_event.is_set():
+        if esperar_stop():
+            stop_event.set()
+            return
+        if not worker.is_alive() and not stop_event.is_set():
+            raise RuntimeError("El núcleo del servidor terminó inesperadamente.")
+
+
 def _preparar_stdio_y_cwd(service_root: str | None) -> str:
     from src.utils.paths import get_base_path
 
@@ -77,7 +86,17 @@ try:
             )
             self._worker.start()
             self.ReportServiceStatus(win32service.SERVICE_RUNNING)
-            win32event.WaitForSingleObject(self.hWaitStop, win32event.INFINITE)
+            try:
+                _vigilar_trabajador(
+                    self._worker,
+                    self._stop_event,
+                    lambda: win32event.WaitForSingleObject(self.hWaitStop, 1000) == win32event.WAIT_OBJECT_0,
+                )
+            except RuntimeError as error:
+                from src.logger import logger
+
+                logger.error("Servicio Windows: %s", error)
+                raise
             self._stop_event.set()
             if self._worker.is_alive():
                 self._worker.join(timeout=8.0)

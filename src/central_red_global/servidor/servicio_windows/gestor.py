@@ -275,7 +275,7 @@ def instalar_servicio_windows(
         return False, msg
 
     _sc_run("description", SERVICE_NAME, SERVICE_DESCRIPTION)
-    _sc_run(
+    recovery = _sc_run(
         "failure",
         SERVICE_NAME,
         "reset=",
@@ -283,6 +283,11 @@ def instalar_servicio_windows(
         "actions=",
         "restart/5000/restart/15000/restart/30000",
     )
+    if recovery.returncode != 0:
+        return False, "Servicio registrado, pero no se pudo configurar la recuperación automática."
+    failure_flag = _sc_run("failureflag", SERVICE_NAME, "1")
+    if failure_flag.returncode != 0:
+        return False, "Servicio registrado, pero no se pudo activar la recuperación ante errores del núcleo."
 
     if iniciar:
         _detener_servidores_usuario()
