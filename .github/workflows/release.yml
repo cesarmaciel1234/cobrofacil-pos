@@ -193,7 +193,7 @@ jobs:
           @'
           import json, os, urllib.request, urllib.error, sys
           tok = os.environ["REPORT_TOKEN"].strip()
-          repo = "cesarmaciel1234/cobrofacil-releases"
+          repo = os.environ.get("GITHUB_REPOSITORY") or "cesarmaciel1234/cobrofacil-pos"
           path = "dist/CobroFacil_POS/error_report.json"
           with open(path, "w", encoding="utf-8") as f:
               json.dump({"token": tok, "repo": repo}, f, ensure_ascii=False)
