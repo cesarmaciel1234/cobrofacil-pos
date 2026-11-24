@@ -332,14 +332,14 @@ class MigratorMixin:
                 ("interes_ticket_activado_en",),
             )
             if not cursor.fetchone():
-                cursor.execute("SELECT CURRENT_TIMESTAMP")
-                fila_activacion = cursor.fetchone()
-                if isinstance(fila_activacion, dict):
-                    activacion = next(iter(fila_activacion.values()), None)
-                else:
-                    activacion = fila_activacion[0] if fila_activacion else None
-                if not activacion:
-                    raise RuntimeError("No se pudo leer la hora para activar el interés por ticket")
+                cursor.execute("SELECT MIN(fecha) FROM cuenta_corriente")
+                fila_min = cursor.fetchone()
+                min_fecha = None
+                if isinstance(fila_min, dict):
+                    min_fecha = next(iter(fila_min.values()), None)
+                elif fila_min:
+                    min_fecha = fila_min[0]
+                activacion = min_fecha or "2026-08-01 00:00:00"
                 cursor.execute(
                     "INSERT INTO configuracion (clave, valor) VALUES (?, ?)",
                     (

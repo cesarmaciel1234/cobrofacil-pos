@@ -35,12 +35,15 @@ class QueryExecutorMixin:
         return [_FilaCopia(fila) for fila in filas]
 
     def _normalize_query(self, query: str, conn=None) -> str:
-        """Convierte SQL escrito en dialecto SQLite a dialecto MariaDB si corresponde."""
-        if conn is not None and isinstance(conn, sqlite3.Connection):
-            return query
-        if getattr(self, "db_engine_type", "sqlite") != "mariadb":
-            return query
+        """Convierte SQL según el dialecto del motor activo (SQLite <-> MariaDB)."""
         import re
+        es_sqlite = (conn is not None and isinstance(conn, sqlite3.Connection)) or getattr(self, "db_engine_type", "sqlite") != "mariadb"
+        if es_sqlite:
+            # Normalización dialecto MariaDB → SQLite para modo offline resiliente
+            query = re.sub(r'\bRAND\(\)', 'RANDOM()', query, flags=re.IGNORECASE)
+            query = re.sub(r'\bCURDATE\(\)', "date('now', 'localtime')", query, flags=re.IGNORECASE)
+            query = re.sub(r'\bNOW\(\)', "datetime('now', 'localtime')", query, flags=re.IGNORECASE)
+            return query
         # Escapar caracteres % literales para que el conector MariaDB no los confunda con formato
         query = query.replace('%', '%%')
 
