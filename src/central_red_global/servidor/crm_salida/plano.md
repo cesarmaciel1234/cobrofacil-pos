@@ -17,6 +17,7 @@ src/central_red_global/servidor/crm_salida/
 ├── __init__.py                 <-- Re-exports de alto nivel
 ├── proceso.py                  <-- Aislamiento de subproceso (CLI)
 ├── vigilante.py                <-- Orquestador en segundo plano (daemon thread)
+├── motor_incremental.py        <-- Motor de sincronización incremental en 5 fases (Heartbeat, Tickets, Inventario, CC, Cartera)
 ├── motor.py                    <-- Módulo puente para compatibilidad absoluta (--crm-cartera y tests)
 ├── motor/                      <-- Subcarpeta: Motores de Transporte Nube
 │   ├── README.md               <-- Documentación detallada del motor
@@ -87,12 +88,19 @@ Servidor de Tienda (bandeja.py / headless.py)
    │
    ├──> vigilante.py (hilo daemon en segundo plano)
    │       │
-   │       ├──> subida.py (o subproceso proceso.py via `python main.py --crm-cartera`)
-   │       │       ├── Lee punpro.db / espejo_tienda.db (SQLite mode=ro estricto)
+   │       ├──> motor_incremental.py (ciclo_sincronizacion_completo)
+   │       │       ├── Paso 1: Saludo liviano / Heartbeat (/api/pos/terminal/saludo)
+   │       │       ├── Paso 2: Tickets incrementales + faltantes (/api/pos/tickets/incremental)
+   │       │       ├── Paso 3: Inventario estructurado con hashing (/api/pos/inventario/sync)
+   │       │       ├── Paso 4: Cuenta corriente incremental (/api/pos/cuenta-corriente/incremental)
+   │       │       └── Paso 5: Cartera de clientes (/api/pos/clientes/lote)
+   │       │
+   │       ├──> subida.py (canal de réplica de respaldo / masivo)
+   │       │       ├── Lee punpro.db / espejo_tienda.db (SQLite mode=ro estricto) o MariaDB
    │       │       ├── Sanitiza claves secretas (None)
    │       │       ├── Manifiesto SHA-256 (omite envío si la base no cambió)
    │       │       ├── HTTP POST -> el día de venta sale entero; el resto, en lotes de 150
-   │       │       ├── Checkpointing progresivo por tabla (persistencia inmediata tras cada tabla ok)
+   │       │       ├── Checkpointing progresivo por tabla
    │       │       └── Actualiza estado_nube (sincronizando, exito o error)
    │       │
    │       └──> bajada.py (recepción de datos de la nube)

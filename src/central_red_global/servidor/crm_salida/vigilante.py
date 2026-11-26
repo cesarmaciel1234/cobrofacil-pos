@@ -255,6 +255,28 @@ _ultimo_fallo: float = 0.0
 
 def _vuelta(forzar: bool = False) -> None:
     global _ultimo_aviso, _fallos_consecutivos, _ultimo_fallo
+
+    # 1. Ejecutar protocolo incremental (Saludo liviano -> Habilitación web -> Tickets + Inventario)
+    try:
+        from src.central_red_global.servidor.crm_salida.motor_incremental import ciclo_sincronizacion_completo
+        from src.config import config
+        crm_url = str(config.get("crm_url") or "https://crm-frigorifico.onrender.com").strip()
+        emp_user = str(config.get("crm_usuario") or "maciel").strip()
+        res_inc = ciclo_sincronizacion_completo(crm_url, emp_user)
+        if res_inc.get("ok"):
+            logger.info("CRM incremental OK: %s tickets procesados, %s artículos inventario en %s",
+                        res_inc.get("tickets", {}).get("procesados", 0),
+                        res_inc.get("inventario", {}).get("articulos_procesados", 0),
+                        res_inc.get("nombre_sucursal"))
+            _fallos_consecutivos = 0
+            return
+        elif res_inc.get("habilitada") is False:
+            if _ultimo_aviso != "no_habilitada":
+                logger.info("CRM incremental: %s (continuando con réplica de respaldo)", res_inc.get("mensaje"))
+                _ultimo_aviso = "no_habilitada"
+    except Exception as exc:
+        logger.warning("CRM incremental aviso: %s", exc)
+
     try:
         rol = _rol()
     except Exception as exc:
